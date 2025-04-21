@@ -13,7 +13,7 @@
           <File Source="../publish/TempCleaner.exe" KeyPath="yes" />
           <File Source="../publish/TempCleaner.dll" />
           <File Source="../publish/System.Runtime.dll" />
-          <File Source="../publish/Images/Designer.iso" />
+          <File Source="../publish/Images/Designer.ico" />
         </Component>
       </Directory>
     </StandardDirectory>
