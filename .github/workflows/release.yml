@@ -61,7 +61,9 @@ jobs:
 
       - name: Build MSI Installer
         run: |
-          wix build Installer/Product.wxs -dProductVersion=${{ steps.gitversion.outputs.FullSemVer }} -out publish/MyApp-${{ steps.gitversion.outputs.FullSemVer }}.msi
+          $version = "${{ steps.gitversion.outputs.FullSemVer }}"
+          $safeVersion = $version -replace '\+', '.'
+          wix build Installer/Product.wxs -d:ProductVersion="$safeVersion" -out publish/Temp_Cleaner-$safeVersion.msi
 
       - name: Upload Release Artifacts
         uses: softprops/action-gh-release@v2
