@@ -5,12 +5,11 @@ on:
     branches:
       - main
     tags:
-      - 'v*.*.*'
+      - "v*.*.*"
   workflow_dispatch:
-    
+
 permissions:
   contents: write
-  
 
 jobs:
   release:
@@ -26,12 +25,12 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.x'
+          dotnet-version: "8.x"
 
       - name: Install GitVersion
         uses: gittools/actions/gitversion/setup@v0.11.0
         with:
-          versionSpec: '5.x'
+          versionSpec: "5.x"
 
       - name: Determine Version
         id: gitversion
@@ -40,7 +39,13 @@ jobs:
       - name: Update .csproj Version
         run: |
           $projFile = Get-ChildItem -Recurse -Filter *.csproj | Select-Object -First 1
-          (Get-Content $projFile.FullName) -replace '<Version>.*?</Version>', "<Version>${{ steps.gitversion.outputs.FullSemVer }}</Version>" | Set-Content $projFile.FullName
+          $content = Get-Content $projFile.FullName
+          if ($content -notmatch '<Version>') {
+            $content = $content -replace '</PropertyGroup>', "<Version>${{ steps.gitversion.outputs.FullSemVer }}</Version>`n</PropertyGroup>"
+          } else {
+            $content = $content -replace '<Version>.*?</Version>', "<Version>${{ steps.gitversion.outputs.FullSemVer }}</Version>"
+          }
+          Set-Content $projFile.FullName $content
 
       - name: Restore Dependencies
         run: dotnet restore
@@ -49,13 +54,14 @@ jobs:
         run: dotnet publish -c Release -o publish
 
       - name: Install WiX Toolset
-        run: |
-          choco install wixtoolset --version=4.0.4 -y
-          refreshenv
+        run: dotnet tool install --global wix
+
+      - name: Add WiX to PATH
+        run: echo "$env:USERPROFILE\.dotnet\tools" | Out-File -Append -FilePath $env:GITHUB_PATH
 
       - name: Build MSI Installer
         run: |
-          wix build Installer/Product.wxs -out publish/MyApp-${{ steps.gitversion.outputs.FullSemVer }}.msi
+          wix build Installer/Product.wxs -dProductVersion=${{ steps.gitversion.outputs.FullSemVer }} -out publish/MyApp-${{ steps.gitversion.outputs.FullSemVer }}.msi
 
       - name: Upload Release Artifacts
         uses: softprops/action-gh-release@v2
