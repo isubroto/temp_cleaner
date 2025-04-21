@@ -63,7 +63,7 @@ jobs:
         run: |
           $version = "${{ steps.gitversion.outputs.FullSemVer }}"
           $safeVersion = $version -replace '\+', '.'
-          wix build Installer/Product.wxs -dProductVersion="$safeVersion" -out publish/Temp_Cleaner-$safeVersion.msi
+          wix build Installer\Product.wxs -define ProductVersion=$safeVersion -out publish\Temp_Cleaner-$safeVersion.msi
 
       - name: Upload Release Artifacts
         uses: softprops/action-gh-release@v2
