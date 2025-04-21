@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
 
-  <Package Name="Temp Cleaner" Manufacturer="Subroto Saha" Version="0.0.0.0" UpgradeCode="8ed2b67f-6148-4943-97a2-49d4c7a7dfec">
+  <Package Name="Temp Cleaner"
+           Manufacturer="Subroto Saha"
+           Version="$(var.ProductVersion)"
+           UpgradeCode="8ed2b67f-6148-4943-97a2-49d4c7a7dfec">
+           
     <Media Id="1" Cabinet="media1.cab" EmbedCab="yes" />
-    
+
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFilesFolder">
         <Directory Id="INSTALLFOLDER" Name="Temp_Cleaner">
@@ -12,16 +16,16 @@
             <File Source="..\publish\Temp_Cleaner.dll" />
             <File Source="..\publish\System.Runtime.dll" />
             <File Source="..\publish\Images\Designer.png" />
-</Component>
+          </Component>
         </Directory>
       </Directory>
     </Directory>
 
-    <Feature Id="ProductFeature" Title="Temp_Cleaner" Level="1">
+    <Feature Id="ProductFeature" Title="Temp Cleaner" Level="1">
       <ComponentRef Id="MainExecutable" />
     </Feature>
 
-    <Icon Id="AppIcon" SourceFile="../Images/Designer.png"/>
+    <Icon Id="AppIcon" SourceFile="../Images/Designer.ico"/>
     <Property Id="ARPPRODUCTICON" Value="AppIcon"/>
 
   </Package>
