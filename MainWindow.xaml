@@ -117,22 +117,20 @@
                     </Button.Template>
                 </Button>
             </Grid>
-            <StackPanel Grid.Row="1" Width="500">
+            <StackPanel Grid.Row="1" Width="550">
                 <Image Source="/Images/Designer.png" Width="150" />
                 <TextBlock Text="Tepm Cleaner" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="35" Foreground="White" FontWeight="Bold" Margin="0 10 0 0"/>
                 <ProgressBar x:Name="Progress"  
                             Height="40"  
                             Margin="20 10"  
-                            Value="300"  
-                            Width="400"
-                            Foreground="#4CAF50"  
+                            Value="0"  
+                            Width="400"    
                             Background="#1e2939"  
                             BorderBrush="#101828"  
-                            BorderThickness="2" 
-                            Padding="5"
-                            Maximum="400"
-                            Minimum="0"
-                             >  
+                            BorderThickness="2"  
+                            Padding="5"  
+                            Maximum="400"  
+                            Minimum="0">  
                    <ProgressBar.Template>  
                        <ControlTemplate TargetType="ProgressBar">  
                            <Grid>  
@@ -140,20 +138,159 @@
                                        CornerRadius="20"  
                                        BorderBrush="{TemplateBinding BorderBrush}"  
                                        BorderThickness="{TemplateBinding BorderThickness}"/>  
-                               <Border Background="{TemplateBinding Foreground}"  
-                                       CornerRadius="20"  
-                                       HorizontalAlignment="Left"  
-                                       Width="{TemplateBinding Value}"  
-                                       Margin="2"/>  
+                               <Border CornerRadius="20"  
+                                      HorizontalAlignment="Left"  
+                                      Width="{TemplateBinding Value}"  
+                                      Margin="2">  
+                                  <Border.Triggers>
+                                      <EventTrigger RoutedEvent="ProgressBar.ValueChanged">
+                                          <BeginStoryboard>
+                                              <Storyboard>
+                                                  <DoubleAnimation Storyboard.TargetProperty="Width" 
+                                                                   To="{TemplateBinding Value}" 
+                                                                   Duration="0:0:0.5" />
+                                              </Storyboard>
+                                          </BeginStoryboard>
+                                      </EventTrigger>
+                                  </Border.Triggers>
+                                    <Border.Background>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                            <GradientStop Color="#8a0194" Offset="0.0"/>
+                                            <GradientStop Color="#a800b7" Offset="0.5"/>
+                                            <GradientStop Color="#e12afb" Offset="1.0"/>
+                                        </LinearGradientBrush>
+                                    </Border.Background>
+                                </Border>  
                            </Grid>  
                        </ControlTemplate>  
                    </ProgressBar.Template>  
                 </ProgressBar>
-                <Button 
-                    x:Name="Check" 
-                    Content="Check" 
-                    HorizontalAlignment="Left"
-                    ></Button>
+                <TextBlock
+                    x:Name="Percent"
+                    Text="99"
+                    FontSize="18"
+                    Foreground="White"
+                    HorizontalAlignment="Center"
+                    Margin="0 -44 0 0"
+                    Visibility="Hidden"
+                    />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <Button 
+                       x:Name="Check" 
+                       Content="Check" 
+                       HorizontalAlignment="Center"
+                       Padding="40 20"
+                       Cursor="Hand"
+                       Grid.Column="0" 
+                        Foreground="White" 
+                        FontSize="20" 
+                        Width="110" 
+                        Height="50"
+                        Click="Check_Click">
+                       <Button.Template>
+                           <ControlTemplate TargetType="Button">
+                               <Grid>
+                                   <Border 
+                                       CornerRadius="10"
+                                       BorderBrush="#372aac"
+                                       BorderThickness="2"
+                                       Padding="{TemplateBinding Padding}">
+                                       <Border.Background>
+                                           <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                <GradientStop Color="#372aac" Offset="0.0"/>
+                                                <GradientStop Color="#4f39f6" Offset="0.5"/>
+                                                <GradientStop Color="#7c86ff" Offset="1.0"/>
+                                           </LinearGradientBrush>
+                                       </Border.Background>
+                                   </Border>
+                                   <ContentPresenter 
+                                       HorizontalAlignment="Center" 
+                                       VerticalAlignment="Center" 
+                                       Content="{TemplateBinding Content}"
+                                       />
+                               </Grid>
+                           </ControlTemplate>
+                       </Button.Template>
+                    </Button>
+                    <Button 
+                       x:Name="Clear" 
+                       Content="Clear" 
+                       HorizontalAlignment="Center"
+                       Padding="20 10"
+                       Grid.Column="1"
+                       Cursor="Hand"
+                       Foreground="White" 
+                       FontSize="20" 
+                       Width="110" 
+                       Height="50"
+                       Click="Clear_Click"
+                       IsEnabled="False">
+                       <Button.Template>
+                           <ControlTemplate TargetType="Button">
+                               <Grid>
+                                   <Border 
+                                       CornerRadius="10"
+                                       BorderBrush="#005f5a"
+                                       BorderThickness="2"
+                                       Padding="{TemplateBinding Padding}">
+                                       <Border.Background>
+                                           <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                               <GradientStop Color="#005f5a" Offset="0.0"/>
+                                               <GradientStop Color="#009689" Offset="0.5"/>
+                                               <GradientStop Color="#00d5be" Offset="1.0"/>
+                                           </LinearGradientBrush>
+                                       </Border.Background>
+                                   </Border>
+                                   <ContentPresenter 
+                                       HorizontalAlignment="Center" 
+                                       VerticalAlignment="Center" 
+                                       Content="{TemplateBinding Content}"/>
+                               </Grid>
+                           </ControlTemplate>
+                       </Button.Template>
+                    </Button>
+                    
+                </Grid>
+                <RichTextBox x:Name="Logs"  
+                            Margin="20 10"  
+                            VerticalScrollBarVisibility="Auto"  
+                            IsReadOnly="True"  
+                            Background="Transparent"  
+                            Height="170"  
+                            Foreground="White">  
+                   <RichTextBox.Resources>  
+                       <Style TargetType="{x:Type ScrollBar}">  
+                           <Setter Property="Template">  
+                               <Setter.Value>  
+                                   <ControlTemplate TargetType="{x:Type ScrollBar}">  
+                                       <Grid>  
+                                           <Rectangle Fill="#1e2939" />  
+                                           <Track Name="PART_Track"  
+                                                  IsDirectionReversed="False">  
+                                               <Track.DecreaseRepeatButton>  
+                                                   <RepeatButton Style="{x:Null}" />  
+                                               </Track.DecreaseRepeatButton>  
+                                               <Track.Thumb>  
+                                                   <Thumb Background="#615fff"  
+                                                          BorderBrush="#372aac"  
+                                                          BorderThickness="1"  
+                                                          />  
+                                               </Track.Thumb>  
+                                               <Track.IncreaseRepeatButton>  
+                                                   <RepeatButton Style="{x:Null}" />  
+                                               </Track.IncreaseRepeatButton>  
+                                           </Track>  
+                                       </Grid>  
+                                   </ControlTemplate>  
+                               </Setter.Value>  
+                           </Setter>  
+                       </Style>  
+                   </RichTextBox.Resources>  
+                </RichTextBox>
             </StackPanel>
         </Grid>
     </Border>
