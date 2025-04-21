@@ -1,3 +1,0 @@
-ancestorEntries = [".github/workflows/release.yml"]
-ourEntries = [".github/workflows/release.yml"]
-theirEntries = [".github/workflows/release.yml"]
