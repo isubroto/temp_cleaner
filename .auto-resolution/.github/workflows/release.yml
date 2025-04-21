@@ -65,5 +65,6 @@ jobs:
           files: |
             publish/**/*.exe
             publish/**/*.msi
+            publish/**/*.msi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
