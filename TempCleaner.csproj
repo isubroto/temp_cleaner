@@ -12,6 +12,7 @@
   <ItemGroup>
     <Folder Include="Images\" />
     <Content Include="Images\Designer.ico" CopyToOutputDirectory="PreserveNewest" />
+<Content Include="Images\Designer.png" CopyToOutputDirectory="PreserveNewest" />
     <Resource Include="Images\Designer.ico" /> <!-- Ensures icon is embedded for Win32 resource -->
   </ItemGroup>
 
