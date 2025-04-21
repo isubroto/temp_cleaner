@@ -6,10 +6,12 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <ApplicationIcon>Images\Designer.png</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <Folder Include="Images\" />
+    <Content Include="Images\Designer.png" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
