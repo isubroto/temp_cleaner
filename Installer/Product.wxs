@@ -5,21 +5,18 @@
            Manufacturer="Subroto Saha"
            Version="$(var.ProductVersion)"
            UpgradeCode="8ed2b67f-6148-4943-97a2-49d4c7a7dfec">
-           
     <Media Id="1" Cabinet="media1.cab" EmbedCab="yes" />
 
-    <Directory Id="TARGETDIR" Name="SourceDir">
-      <Directory Id="ProgramFilesFolder">
-        <Directory Id="INSTALLFOLDER" Name="Temp_Cleaner">
-          <Component Id="MainExecutable" Guid="9df3e5c4-8fd2-4c67-90ce-1b6e221a8d88">
-            <File Source="..\publish\Temp_Cleaner.exe" KeyPath="yes" />
-            <File Source="..\publish\Temp_Cleaner.dll" />
-            <File Source="..\publish\System.Runtime.dll" />
-            <File Source="..\publish\Images\Designer.png" />
-          </Component>
-        </Directory>
+    <StandardDirectory Id="ProgramFilesFolder">
+      <Directory Id="INSTALLFOLDER" Name="Temp_Cleaner">
+        <Component Id="MainExecutable" Guid="9df3e5c4-8fd2-4c67-90ce-1b6e221a8d88">
+          <File Source="..\publish\Temp_Cleaner.exe" KeyPath="yes" />
+          <File Source="..\publish\Temp_Cleaner.dll" />
+          <File Source="..\publish\System.Runtime.dll" />
+          <File Source="..\publish\Images\Designer.png" />
+        </Component>
       </Directory>
-    </Directory>
+    </StandardDirectory>
 
     <Feature Id="ProductFeature" Title="Temp Cleaner" Level="1">
       <ComponentRef Id="MainExecutable" />
