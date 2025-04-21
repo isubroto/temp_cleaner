@@ -2,8 +2,15 @@ name: Release WPF App with MSI
 
 on:
   push:
+    branches:
+      - main
     tags:
       - 'v*.*.*'
+  workflow_dispatch:
+    
+permissions:
+  contents: write
+  
 
 jobs:
   release:
@@ -42,7 +49,9 @@ jobs:
         run: dotnet publish -c Release -o publish
 
       - name: Install WiX Toolset
-        run: dotnet tool install --global wix
+        run: |
+          choco install wixtoolset --version=4.0.4 -y
+          refreshenv
 
       - name: Build MSI Installer
         run: |
@@ -55,7 +64,6 @@ jobs:
           tag_name: v${{ steps.gitversion.outputs.FullSemVer }}
           files: |
             publish/**/*.exe
-            publish/**/*.dll
             publish/**/*.msi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
