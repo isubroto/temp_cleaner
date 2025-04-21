@@ -10,10 +10,7 @@ on:
     
 permissions:
   contents: write
-  
 
-permissions:
-  contents: write
 
 jobs:
   release:
@@ -58,7 +55,9 @@ jobs:
 
       - name: Build MSI Installer
         run: |
-          wix build Installer/Product.wxs -out publish/MyApp-${{ steps.gitversion.outputs.FullSemVer }}.msi
+          $version = "${{ steps.gitversion.outputs.FullSemVer }}"
+          $safeVersion = $version -replace '\+', '.'
+          wix build Installer/Product.wxs -d:ProductVersion="$safeVersion" -out publish/Temp_Cleaner-$safeVersion.msi
 
       - name: Upload Release Artifacts
         uses: softprops/action-gh-release@v2
@@ -67,7 +66,6 @@ jobs:
           tag_name: v${{ steps.gitversion.outputs.FullSemVer }}
           files: |
             publish/**/*.exe
-            publish/**/*.msi
             publish/**/*.msi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
