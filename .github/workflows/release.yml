@@ -60,6 +60,7 @@ jobs:
         run: echo "$env:USERPROFILE\.dotnet\tools" | Out-File -Append -FilePath $env:GITHUB_PATH
 
       - name: Build MSI Installer
+        working-directory: Installer
         run: |
           $version = "${{ steps.gitversion.outputs.FullSemVer }}"
           $safeVersion = $version -replace '\+', '.'
