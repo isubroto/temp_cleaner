@@ -51,7 +51,7 @@ jobs:
         run: dotnet restore
 
       - name: Publish WPF App
-        run: dotnet publish -c Release -o publish
+        run: dotnet publish ./TempCleaner.csproj -c Release -o publish
 
       - name: Install WiX Toolset
         run: dotnet tool install --global wix
@@ -63,7 +63,7 @@ jobs:
         run: |
           $version = "${{ steps.gitversion.outputs.FullSemVer }}"
           $safeVersion = $version -replace '\+', '.'
-          wix build Installer\Product.wxs -define ProductVersion=$safeVersion -out publish\Temp_Cleaner-$safeVersion.msi
+          wix build Product.wxs -define ProductVersion=$safeVersion -out ../publish/Temp_Cleaner-$safeVersion.msi
 
       - name: Upload Release Artifacts
         uses: softprops/action-gh-release@v2
