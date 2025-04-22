@@ -57,7 +57,7 @@ jobs:
         run: dotnet publish ${{env.project}} -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true --no-build
 
       - name: Install WiX Toolset
-        run: choco install wix-toolset --version 4.0.0
+        run: choco install wix-toolset --yes
 
       - name: Add WiX to PATH
         run: echo "$env:USERPROFILE\.dotnet\tools" | Out-File -Append -FilePath $env:GITHUB_PATH
