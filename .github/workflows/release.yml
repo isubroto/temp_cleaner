@@ -90,7 +90,7 @@ jobs:
           echo "SAFE_VERSION=$safeVersion" >> $GITHUB_ENV
 
           # Build the MSI using WiX Toolset (Ensure wix is in PATH or use full path)
-          & "C:\Program Files (x86)\WiX Toolset v4.0\bin\wix.exe" build Product.wxs -define ProductVersion=$safeVersion -out "../publish/Temp_Cleaner-$safeVersion.msi"
+          & "C:\Program Files\WiX Toolset v6.0\bin\wix.exe" build Product.wxs -define ProductVersion=$safeVersion -out "../publish/Temp_Cleaner-$safeVersion.msi"
 
 
       - name: Upload Release Artifacts
