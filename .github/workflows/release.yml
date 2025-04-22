@@ -58,12 +58,16 @@ jobs:
 
       - name: Install WiX Toolset
         run: |
-          Invoke-WebRequest -Uri https://github.com/wixtoolset/wix/releases/download/v6.0.0/WixAdditionalTools.exe -OutFile wix311.exe
-          Start-Process wix311.exe -ArgumentList "/quiet" -Wait
-          Remove-Item wix311.exe
+          Invoke-WebRequest -Uri https://github.com/wixtoolset/wix/releases/download/v6.0.0/WixAdditionalTools.exe -OutFile wix6.exe
+          Start-Process wix6.exe -ArgumentList "/quiet" -Wait
+          Remove-Item wix6.exe
 
-      - name: Add WiX to PATH
-        run: echo "$env:USERPROFILE\.dotnet\tools" | Out-File -Append -FilePath $env:GITHUB_PATH
+      - name: Add WiX Toolset to PATH
+        run: |
+          echo "Adding WiX Toolset to PATH"
+          $env:PATH = "$env:PATH;C:\Program Files (x86)\WiX Toolset v6.0\bin"
+          # Test if heat.exe is available
+          & "C:\Program Files (x86)\WiX Toolset v6.0\bin\heat.exe" --version
       
       - name: Generate Files.wxs excluding 'publish' folder
         run: |
