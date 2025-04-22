@@ -8,7 +8,11 @@
     <Media Id="1" Cabinet="media1.cab" EmbedCab="yes" />
 
     <StandardDirectory Id="ProgramFilesFolder">
-      <Directory Id="INSTALLFOLDER" Name="Temp_Cleaner" />
+      <ComponentGroup Id="AppFiles">
+  <Component Id="MainExecutable" Directory="INSTALLFOLDER" Guid="8ed2b67f-6148-4943-97a2-49d4c7a7dfec">
+  </Component>
+</ComponentGroup>
+
     </StandardDirectory>
 
     <StandardDirectory Id="DesktopFolder">
