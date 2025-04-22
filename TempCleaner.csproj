@@ -9,6 +9,10 @@
     <UseWPF>true</UseWPF>
     <ApplicationIcon>Images\Designer.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+
   </PropertyGroup>
 
   <ItemGroup>
