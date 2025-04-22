@@ -78,6 +78,10 @@ jobs:
             -out Installer\Files.wxs `
             -t Installer\TransformExcludePublish.xsl
 
+      - name: show Files.wxs
+        run: |
+          Get-Content -Path "Installer\Files.wxs"
+
       - name: Build MSI Installer
         working-directory: Installer
         run: |
