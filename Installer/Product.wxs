@@ -45,11 +45,6 @@
       <RegistryValue Root="HKCU" Key="Software\Temp Cleaner" Name="startMenu" Type="integer" Value="1" KeyPath="yes"/>
     </Component>
 
-    <!-- Group for app files -->
-    <ComponentGroup Id="AppFiles">
-      <ComponentRef Id="MainExecutable" />
-    </ComponentGroup>
-
     <!-- Icon -->
     <Icon Id="AppIcon" SourceFile="..\Images\Designer.ico"/>
     <Property Id="ARPPRODUCTICON" Value="AppIcon"/>
