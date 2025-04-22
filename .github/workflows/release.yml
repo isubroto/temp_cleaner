@@ -86,8 +86,8 @@ jobs:
           # Replace '+' with '.' in version to make it safe for file naming
           $safeVersion = $version -replace '\+', '.'
           
-          # Set safeVersion as an environment variable for use in subsequent steps
-          echo "SAFE_VERSION=$safeVersion" >> $GITHUB_ENV
+          # Write to GitHub environment file (this is how you persist it)
+          "SAFE_VERSION=$safeVersion" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
           # Build the MSI using WiX Toolset (Ensure wix is in PATH or use full path)
           & "C:\Program Files\WiX Toolset v6.0\bin\wix.exe" build Product.wxs -define ProductVersion=$safeVersion -out "../publish/Temp_Cleaner-$safeVersion.msi"
