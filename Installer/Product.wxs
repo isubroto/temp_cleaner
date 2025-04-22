@@ -11,7 +11,7 @@
       <Directory Id="INSTALLFOLDER" Name="Temp_Cleaner">
         <Component Id="MainExecutable" Guid="9df3e5c4-8fd2-4c67-90ce-1b6e221a8d88">
           <File Source="..\bin\Release\net8.0-windows\win-x64\publish\TempCleaner.exe" KeyPath="yes" />
-          <File Source="..\bin\Release\net8.0-windows\Images\Designer.ico" />
+          <File Source="..\bin\Release\net8.0-windows\win-x64\Images\Designer.ico" />
 
         </Component>
       </Directory>
