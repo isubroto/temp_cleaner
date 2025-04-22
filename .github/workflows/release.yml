@@ -61,6 +61,16 @@ jobs:
 
       - name: Add WiX to PATH
         run: echo "$env:USERPROFILE\.dotnet\tools" | Out-File -Append -FilePath $env:GITHUB_PATH
+      
+      - name: Generate Files.wxs excluding 'publish' folder
+        run: |
+          "C:\Program Files (x86)\WiX Toolset v4.0\bin\heat.exe" dir "bin\Release\net8.0-windows\win-x64" ^
+            -cg AppFiles ^
+            -dr INSTALLFOLDER ^
+            -sfrag -srd -gg ^
+            -var var.SourceDir ^
+            -out Installer\Files.wxs ^
+            -t Installer\TransformExcludePublish.xsl
 
       - name: Build MSI Installer
         working-directory: Installer

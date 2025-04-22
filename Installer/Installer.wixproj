@@ -1,0 +1,16 @@
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <OutputType>Package</OutputType>
+    <OutputName>MyAppInstaller</OutputName>
+    <WixTargetsPath Condition=" '$(WixTargetsPath)' == '' ">
+      $(ProgramFiles)\WiX Toolset v4.0\Wix.targets
+    </WixTargetsPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Product.wxs" />
+    <Compile Include="Files.wxs" />
+  </ItemGroup>
+
+  <Import Project="$(WixTargetsPath)" />
+</Project>

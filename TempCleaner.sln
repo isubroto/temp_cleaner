@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.13.35931.197 d17.13
+VisualStudioVersion = 17.13.35931.197
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TempCleaner", "TempCleaner.csproj", "{4C7558EB-4379-4559-9A79-0BE7BAD7E07F}"
+EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "Temp Cleaner", "..\Temp Cleaner\Temp Cleaner.vdproj", "{15311D39-D2F9-2B48-5FA4-280F3D0256AA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,8 @@ Global
 		{4C7558EB-4379-4559-9A79-0BE7BAD7E07F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4C7558EB-4379-4559-9A79-0BE7BAD7E07F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4C7558EB-4379-4559-9A79-0BE7BAD7E07F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{15311D39-D2F9-2B48-5FA4-280F3D0256AA}.Debug|Any CPU.ActiveCfg = Debug
+		{15311D39-D2F9-2B48-5FA4-280F3D0256AA}.Release|Any CPU.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
