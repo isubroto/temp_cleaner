@@ -18,7 +18,7 @@
 
       <!-- Desktop Folder Shortcut -->
       <Directory Id="DesktopFolder">
-        <Component Id="DesktopShortcut" Guid="PUT-GUID-HERE">
+        <Component Id="DesktopShortcut" Guid="8ed2b67f-6148-4943-97a2-49d4c7a7dfec">
           <Shortcut Id="DesktopAppShortcut"
                     Name="Temp Cleaner"
                     Target="[INSTALLFOLDER]TempCleaner.exe"
@@ -32,7 +32,7 @@
       <!-- Start Menu Shortcut -->
       <Directory Id="ProgramMenuFolder">
         <Directory Id="ProgramMenuDir" Name="Temp Cleaner">
-          <Component Id="StartMenuShortcut" Guid="PUT-GUID-HERE">
+          <Component Id="StartMenuShortcut" Guid="8ed2b67f-6148-4943-97a2-49d4c7a7dfec">
             <Shortcut Id="StartMenuAppShortcut"
                       Name="Temp Cleaner"
                       Target="[INSTALLFOLDER]TempCleaner.exe"
