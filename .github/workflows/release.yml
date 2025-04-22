@@ -75,7 +75,7 @@ jobs:
           name: Release v${{ steps.gitversion.outputs.FullSemVer }}
           tag_name: v${{ steps.gitversion.outputs.FullSemVer }}
           files: |
-            publish/**/*.exe
+            bin/Release/net8.0-windows/win-x64/publish/*.exe
             publish/**/*.msi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
