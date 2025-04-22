@@ -11,7 +11,7 @@ on:
 permissions:
   contents: write
 env:
-  project: TempCleaner.csproj
+  project: ./TempCleaner.csproj
 jobs:
   release:
     runs-on: windows-latest
