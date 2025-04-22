@@ -52,6 +52,7 @@
     <!-- Feature -->
     <Feature Id="ProductFeature" Title="Temp Cleaner" Level="1">
       <ComponentGroupRef Id="AppFiles" />
+       <ComponentRef Id="MainExecutable" />
       <ComponentRef Id="DesktopShortcut"/>
       <ComponentRef Id="StartMenuShortcut"/>
     </Feature>
