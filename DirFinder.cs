@@ -11,7 +11,7 @@ namespace TempCleaner
                 // Try opening for read/write to test access
                 if (File.Exists(path))
                 {
-                    using (FileStream fs = File.Open(path, FileMode.Open, FileAccess.ReadWrite)) { }
+                    using (FileStream fs = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)) { }
                 }
                 else if (Directory.Exists(path))
                 {
@@ -26,6 +26,7 @@ namespace TempCleaner
                 return false;
             }
         }
+
 
         public List<string> DirandFile(string path)
         {
@@ -61,6 +62,7 @@ namespace TempCleaner
 
             return result;
         }
+
 
 
     }

@@ -17,8 +17,7 @@
 
   <ItemGroup>
     <Folder Include="Images\" />
-    <Content Include="Images\Designer.ico" CopyToOutputDirectory="PreserveNewest" />
-<Content Include="Images\Designer.png" CopyToOutputDirectory="PreserveNewest" />
+    <Resource Include="Images\Designer.png" />
     <Resource Include="Images\Designer.ico" />
   </ItemGroup>
 </Project>

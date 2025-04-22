@@ -72,17 +72,17 @@ namespace TempCleaner
 
             string[] paths = new[]
             {
-        @"C:\Windows\Prefetch",
-        @"C:\Windows\SoftwareDistribution\Download",
-        @"C:\Windows\Temp",
-        $@"C:\Users\{name[1]}\AppData\Local\Temp",
-        $@"C:\Users\{name[1]}\AppData\Local\Microsoft\Windows\INetCache",
-        $@"C:\Users\{name[1]}\AppData\Local\Microsoft\Windows\Explorer",
-        $@"C:\Users\{name[1]}\AppData\Local\CrashDumps",
-        @"C:\Windows\System32\LogFiles"
-    };
+            @"C:\Windows\Prefetch",
+            @"C:\Windows\SoftwareDistribution\Download",
+            @"C:\Windows\Temp",
+            $@"C:\Users\{name[1]}\AppData\Local\Temp",
+            $@"C:\Users\{name[1]}\AppData\Local\Microsoft\Windows\INetCache",
+            $@"C:\Users\{name[1]}\AppData\Local\Microsoft\Windows\Explorer",
+            $@"C:\Users\{name[1]}\AppData\Local\CrashDumps",
+            @"C:\Windows\System32\LogFiles"
+        };
 
-            List<string> allItems = new List<string>();
+            List<string> allItems = new();
 
             // Run the directory fetch in a background task
             await Task.Run(() =>
@@ -208,6 +208,5 @@ namespace TempCleaner
 
             Clear.IsEnabled = false;
         }
-
     }
 }
