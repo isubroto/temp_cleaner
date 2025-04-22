@@ -10,7 +10,8 @@ on:
 
 permissions:
   contents: write
-
+env:
+  project: TempCleaner.csproj
 jobs:
   release:
     runs-on: windows-latest
@@ -48,10 +49,12 @@ jobs:
           Set-Content $projFile.FullName $content
 
       - name: Restore Dependencies
-        run: dotnet restore
+        run: dotnet restore ${{env.project}}
 
-      - name: Publish WPF App
-        run: dotnet publish ./TempCleaner.csproj -c Release -r win-x64 --self-contained true -o publish
+      - name: build WPF App
+        run: dotnet build ${{env.project}} -c Release --no-restore
+      - name: publish WPF App
+        run: dotnet publish ${{env.project}} -c Release --self-contained -r win-x64 -p:PublishSingleFile=true --no-build
 
       - name: Install WiX Toolset
         run: dotnet tool install --global wix
