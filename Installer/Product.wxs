@@ -7,12 +7,9 @@
            UpgradeCode="8ed2b67f-6148-4943-97a2-49d4c7a7dfec">
     <Media Id="1" Cabinet="media1.cab" EmbedCab="yes" />
 
+    <!-- Directories -->
     <StandardDirectory Id="ProgramFilesFolder">
-      <ComponentGroup Id="AppFiles">
-  <Component Id="MainExecutable" Directory="INSTALLFOLDER" Guid="8ed2b67f-6148-4943-97a2-49d4c7a7dfec">
-  </Component>
-</ComponentGroup>
-
+      <Directory Id="INSTALLFOLDER" Name="Temp_Cleaner" />
     </StandardDirectory>
 
     <StandardDirectory Id="DesktopFolder">
@@ -24,6 +21,10 @@
     </StandardDirectory>
 
     <!-- Components -->
+    <Component Id="MainExecutable" Directory="INSTALLFOLDER" Guid="*">
+      <File Source="$(var.SourceDir)\TempCleaner.exe" />
+    </Component>
+
     <Component Id="DesktopShortcut" Directory="DesktopShortcutDir" Guid="*">
       <Shortcut Id="DesktopAppShortcut"
                 Name="Temp Cleaner"
@@ -43,6 +44,11 @@
       <RemoveFolder Id="RemoveStartMenu" On="uninstall"/>
       <RegistryValue Root="HKCU" Key="Software\Temp Cleaner" Name="startMenu" Type="integer" Value="1" KeyPath="yes"/>
     </Component>
+
+    <!-- Group for app files -->
+    <ComponentGroup Id="AppFiles">
+      <ComponentRef Id="MainExecutable" />
+    </ComponentGroup>
 
     <!-- Icon -->
     <Icon Id="AppIcon" SourceFile="..\Images\Designer.ico"/>
