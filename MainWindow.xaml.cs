@@ -193,6 +193,8 @@ namespace TempCleaner
                 Logs.Document.Blocks.Add(new Paragraph(new Run("🎉 Clean up completed!")));
                 Logs.ScrollToEnd();
             });
+
+            Clear.IsEnabled = false;
         }
 
     }
