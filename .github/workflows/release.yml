@@ -49,7 +49,7 @@ jobs:
           Set-Content $projFile.FullName $content
 
       - name: Restore Dependencies
-        run: dotnet restore ${{env.project}}
+        run: dotnet restore ${{env.project}} -r win-x64
 
       - name: build WPF App
         run: dotnet build ${{env.project}} -c Release --no-restore
