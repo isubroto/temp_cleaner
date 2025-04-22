@@ -22,7 +22,7 @@
 
     <!-- Components -->
     <Component Id="MainExecutable" Directory="INSTALLFOLDER" Guid="*">
-      <File Source="$(var.SourceDir)\TempCleaner.exe" />
+      <File Source="..\bin\Release\net8.0-windows\win-x64\TempCleaner.exe" />
     </Component>
 
     <Component Id="DesktopShortcut" Directory="DesktopShortcutDir" Guid="*">
