@@ -67,7 +67,7 @@ jobs:
           echo "Adding WiX Toolset to PATH"
           $env:PATH = "$env:PATH;C:\Program Files\WiX Toolset v6.0\bin\x64"
           # Test if heat.exe is available
-          & "C:\Program Files\WiX Toolset v6.0\bin\x64\heat.exe" --version
+          & "C:\Program Files\WiX Toolset v6.0\bin\x64\heat.exe"
       
       - name: Generate Files.wxs excluding 'publish' folder
         run: |
