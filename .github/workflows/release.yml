@@ -73,6 +73,7 @@ jobs:
             -cg AppFiles `
             -dr INSTALLFOLDER `
             -sfrag -srd -gg `
+            -sreg -scom `
             -var var.SourceDir `
             -out Installer\Files.wxs `
             -t Installer\TransformExcludePublish.xsl
