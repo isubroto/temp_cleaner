@@ -65,7 +65,7 @@ namespace TempCleaner
             Clear.IsEnabled = false;
             UserName = System.Security.Principal.WindowsIdentity.GetCurrent().Name;
             name = UserName.Split('\\');
-
+            Check.Content = "Checking";
             Logs.Document.Blocks.Clear();
             Progress.Value = 0;
             FullList.Clear();
@@ -114,6 +114,7 @@ namespace TempCleaner
                 // To avoid blocking UI, delay a bit before the next UI update
                 await Task.Delay(10); // Delay to give time for UI to update
             }
+            Check.Content = "Checked";
             if (allItems.Count > 0)
             {
                 Clear.IsEnabled = true;
