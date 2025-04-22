@@ -22,8 +22,8 @@ namespace TempCleaner
     ///
     public partial class MainWindow : Window
     {
-        private string UserName;
-        private string[] name;
+        private string UserName = "";
+        private string[] name = [];
         private DirFinder Dirfinder = new DirFinder();
         private List<string> FullList = new List<string>();
 
@@ -198,7 +198,7 @@ namespace TempCleaner
                 }
             });
 
-            SHEmptyRecycleBin(IntPtr.Zero, null, RecycleFlag.SHERB_NOSOUND | RecycleFlag.SHERB_NOCONFIRMATION);
+            SHEmptyRecycleBin(IntPtr.Zero, string.Empty, RecycleFlag.SHERB_NOSOUND | RecycleFlag.SHERB_NOCONFIRMATION);
 
             Dispatcher.Invoke(() =>
             {
