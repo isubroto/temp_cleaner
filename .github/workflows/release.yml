@@ -57,7 +57,7 @@ jobs:
         run: dotnet publish ${{env.project}} -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true --no-build
 
       - name: Install WiX Toolset
-        run: dotnet tool install --global wix
+        run: choco install wix-toolset --version 4.0.0
 
       - name: Add WiX to PATH
         run: echo "$env:USERPROFILE\.dotnet\tools" | Out-File -Append -FilePath $env:GITHUB_PATH
@@ -75,17 +75,27 @@ jobs:
       - name: Build MSI Installer
         working-directory: Installer
         run: |
+          # Get version from GitVersion
           $version = "${{ steps.gitversion.outputs.FullSemVer }}"
+          
+          # Replace '+' with '.' in version to make it safe for file naming
           $safeVersion = $version -replace '\+', '.'
-          wix build Product.wxs -define ProductVersion=$safeVersion -out ../publish/Temp_Cleaner-$safeVersion.msi
+          
+          # Set safeVersion as an environment variable for use in subsequent steps
+          echo "SAFE_VERSION=$safeVersion" >> $GITHUB_ENV
+
+          # Build the MSI using WiX Toolset (Ensure wix is in PATH or use full path)
+          & "C:\Program Files (x86)\WiX Toolset v4.0\bin\wix.exe" build Product.wxs -define ProductVersion=$safeVersion -out "../publish/Temp_Cleaner-$safeVersion.msi"
+
 
       - name: Upload Release Artifacts
         uses: softprops/action-gh-release@v2
         with:
-          name: Release v${{ steps.gitversion.outputs.FullSemVer }}
-          tag_name: v${{ steps.gitversion.outputs.FullSemVer }}
+          name: Release v${{ env.SAFE_VERSION }}
+          tag_name: v${{ env.SAFE_VERSION }}
           files: |
             bin/Release/net8.0-windows/win-x64/publish/*.exe
-            publish/**/*.msi
+            publish/**/Temp_Cleaner-${{ env.SAFE_VERSION }}.msi
+
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

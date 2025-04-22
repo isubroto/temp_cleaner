@@ -7,22 +7,54 @@
            UpgradeCode="8ed2b67f-6148-4943-97a2-49d4c7a7dfec">
     <Media Id="1" Cabinet="media1.cab" EmbedCab="yes" />
 
-    <StandardDirectory Id="ProgramFilesFolder">
-      <Directory Id="INSTALLFOLDER" Name="Temp_Cleaner">
-        <Component Id="MainExecutable" Guid="9df3e5c4-8fd2-4c67-90ce-1b6e221a8d88">
-          <File Source="..\bin\Release\net8.0-windows\win-x64\publish\TempCleaner.exe" KeyPath="yes" />
-          <File Source="..\bin\Release\net8.0-windows\win-x64\Images\Designer.ico" />
+    <!-- Program Files Folder -->
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder">
+        <Directory Id="INSTALLFOLDER" Name="Temp_Cleaner">
+          <!-- Include all files automatically via Files.wxs -->
+          <ComponentGroupRef Id="AppFiles" />
+        </Directory>
+      </Directory>
 
+      <!-- Desktop Folder Shortcut -->
+      <Directory Id="DesktopFolder">
+        <Component Id="DesktopShortcut" Guid="PUT-GUID-HERE">
+          <Shortcut Id="DesktopAppShortcut"
+                    Name="Temp Cleaner"
+                    Target="[INSTALLFOLDER]TempCleaner.exe"
+                    Icon="AppIcon"
+                    WorkingDirectory="INSTALLFOLDER" />
+          <RemoveFolder Id="RemoveDesktop" On="uninstall"/>
+          <RegistryValue Root="HKCU" Key="Software\Temp Cleaner" Name="installed" Type="integer" Value="1" KeyPath="yes"/>
         </Component>
       </Directory>
-    </StandardDirectory>
 
-    <Feature Id="ProductFeature" Title="Temp Cleaner" Level="1">
-      <ComponentRef Id="MainExecutable" />
-    </Feature>
+      <!-- Start Menu Shortcut -->
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="ProgramMenuDir" Name="Temp Cleaner">
+          <Component Id="StartMenuShortcut" Guid="PUT-GUID-HERE">
+            <Shortcut Id="StartMenuAppShortcut"
+                      Name="Temp Cleaner"
+                      Target="[INSTALLFOLDER]TempCleaner.exe"
+                      Icon="AppIcon"
+                      WorkingDirectory="INSTALLFOLDER" />
+            <RemoveFolder Id="RemoveStartMenu" On="uninstall"/>
+            <RegistryValue Root="HKCU" Key="Software\Temp Cleaner" Name="startMenu" Type="integer" Value="1" KeyPath="yes"/>
+          </Component>
+        </Directory>
+      </Directory>
+    </Directory>
 
-    <Icon Id="AppIcon" SourceFile="../Images/Designer.ico"/>
+    <!-- Icon and ARP -->
+    <Icon Id="AppIcon" SourceFile="..\Images\Designer.ico"/>
     <Property Id="ARPPRODUCTICON" Value="AppIcon"/>
+
+    <!-- Features -->
+    <Feature Id="ProductFeature" Title="Temp Cleaner" Level="1">
+      <ComponentGroupRef Id="AppFiles" />
+      <ComponentRef Id="DesktopShortcut"/>
+      <ComponentRef Id="StartMenuShortcut"/>
+    </Feature>
 
   </Package>
 </Wix>
