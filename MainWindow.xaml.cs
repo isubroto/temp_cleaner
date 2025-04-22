@@ -1,20 +1,32 @@
-﻿using System.IO;
+﻿
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Input;
+// To fix the CS0246 error, you need to ensure that the Squirrel NuGet package is installed in your project.  
+// Follow these steps:  
+// 1. Open the NuGet Package Manager in Visual Studio.  
+// 2. Search for "Squirrel.Windows" and install it.  
+// 3. After installation, the error should be resolved.  
 
+// If the package is already installed but the error persists, ensure the project file includes the reference to Squirrel.Windows.  
+// You can also try cleaning and rebuilding the solution.  
+
+// No code changes are required in this file to fix the error.
 namespace TempCleaner
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
+    ///
     public partial class MainWindow : Window
     {
         private string UserName;
         private string[] name;
         private DirFinder Dirfinder = new DirFinder();
         private List<string> FullList = new List<string>();
+
 
         [DllImport("Shell32.dll", SetLastError = true)]
         static extern int SHEmptyRecycleBin(IntPtr hwnd, string pszRootPath, RecycleFlag dwFlags);
@@ -70,7 +82,7 @@ namespace TempCleaner
         @"C:\Windows\System32\LogFiles"
     };
 
-            List<string> allItems = new();
+            List<string> allItems = new List<string>();
 
             // Run the directory fetch in a background task
             await Task.Run(() =>

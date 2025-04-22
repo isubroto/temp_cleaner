@@ -3,6 +3,7 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
@@ -14,7 +15,11 @@
     <Folder Include="Images\" />
     <Content Include="Images\Designer.ico" CopyToOutputDirectory="PreserveNewest" />
 <Content Include="Images\Designer.png" CopyToOutputDirectory="PreserveNewest" />
-    <Resource Include="Images\Designer.ico" /> <!-- Ensures icon is embedded for Win32 resource -->
+<PackageReference Include="NuGet.CommandLine" Version="6.13.2">
+  <PrivateAssets>all</PrivateAssets>
+  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+</PackageReference>
+    <Resource Include="Images\Designer.ico" />
   </ItemGroup>
 
   <PropertyGroup>
