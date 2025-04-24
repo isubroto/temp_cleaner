@@ -12,7 +12,7 @@
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-    <Version>0.1.11+3</Version>
+    <Version>0.1.12.1</Version>
 
   </PropertyGroup>
 
@@ -22,4 +22,5 @@
     <Resource Include="Images\Designer.ico" />
   </ItemGroup>
 </Project>
+
 
