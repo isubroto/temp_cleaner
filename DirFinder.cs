@@ -4,22 +4,49 @@ namespace TempCleaner
 {
     public class DirFinder
     {
+        public int count = 0;
+
         private bool HasReadWritePermission(string path)
         {
             try
             {
-                // Try opening for read/write to test access
                 if (File.Exists(path))
                 {
-                    using (FileStream fs = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)) { }
+                    // Try opening the file for read/write access
+                    using (FileStream fs = File.Open(path, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite)) { }
+                    return true;
                 }
                 else if (Directory.Exists(path))
                 {
-                    string testFile = Path.Combine(path, Path.GetRandomFileName());
-                    File.Create(testFile).Close();
-                    File.Delete(testFile);
+                    // Check read access (non-throwing version)
+                    bool canRead = false;
+                    try
+                    {
+                        canRead = Directory.EnumerateFileSystemEntries(path).Any();
+                    }
+                    catch
+                    {
+                        canRead = false;
+                    }
+
+                    // Check write access with try-catch isolation
+                    bool canWrite = false;
+                    try
+                    {
+                        string testFile = Path.Combine(path, Path.GetRandomFileName());
+                        using (FileStream fs = File.Create(testFile)) { }
+                        File.Delete(testFile);
+                        canWrite = true;
+                    }
+                    catch
+                    {
+                        canWrite = false;
+                    }
+
+                    return canRead && canWrite;
                 }
-                return true;
+
+                return false;
             }
             catch
             {
@@ -28,7 +55,9 @@ namespace TempCleaner
         }
 
 
-        public List<string> DirandFile(string path)
+
+
+        public List<string> DirandFile(string path, Action<FileStatusReport>? report = null)
         {
             var result = new List<string>();
 
@@ -41,10 +70,16 @@ namespace TempCleaner
                     if (HasReadWritePermission(file))
                     {
                         result.Add(file);
+                        count++;
+                        report?.Invoke(new FileStatusReport($"✔ File found: {file}", count));
+
                     }
                 }
             }
-            catch (Exception) { }
+            catch (Exception ex)
+            {
+
+            }
 
             // Get all directories with read/write access
             try
@@ -58,12 +93,12 @@ namespace TempCleaner
                     }
                 }
             }
-            catch (Exception) { }
+            catch (Exception ex)
+            {
+
+            }
 
             return result;
         }
-
-
-
     }
 }

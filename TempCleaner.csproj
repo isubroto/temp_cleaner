@@ -12,6 +12,7 @@
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <Version>0.1.10.3</Version>
 
   </PropertyGroup>
 

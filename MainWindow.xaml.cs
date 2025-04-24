@@ -1,8 +1,9 @@
 ﻿
+using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows;
-using System.Windows.Documents;
 using System.Windows.Input;
 // To fix the CS0246 error, you need to ensure that the Squirrel NuGet package is installed in your project.  
 // Follow these steps:  
@@ -27,6 +28,14 @@ namespace TempCleaner
         private DirFinder Dirfinder = new DirFinder();
         private List<string> FullList = new List<string>();
 
+
+        public MainWindow()
+        {
+            InitializeComponent();
+            var currentVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+            MessageBox.Show(currentVersion, "Version Information", MessageBoxButton.OK, MessageBoxImage.Information);
+
+        }
 
         [DllImport("Shell32.dll", SetLastError = true)]
         static extern int SHEmptyRecycleBin(IntPtr hwnd, string pszRootPath, RecycleFlag dwFlags);
@@ -61,141 +70,213 @@ namespace TempCleaner
 
         private async void Check_Click(object sender, RoutedEventArgs e)
         {
+            // UI reset
             Percent.Visibility = Visibility.Hidden;
             Clear.IsEnabled = false;
+            Clear.Content = "Clear";
+            Clear.Cursor = Cursors.No;
+
             UserName = System.Security.Principal.WindowsIdentity.GetCurrent().Name;
             name = UserName.Split('\\');
             Check.Content = "Checking";
-            Logs.Document.Blocks.Clear();
+
+            Logs.Items.Clear();
             Progress.Value = 0;
             FullList.Clear();
+            Dirfinder.count = 0;
+
+            int cnt = 0;
+            int intit = 0;
 
             string[] paths = new[]
             {
-            @"C:\Windows\Prefetch",
-            @"C:\Windows\SoftwareDistribution\Download",
-            @"C:\Windows\Temp",
-            $@"C:\Users\{name[1]}\AppData\Local\Temp",
-            $@"C:\Users\{name[1]}\AppData\Local\Microsoft\Windows\INetCache",
-            $@"C:\Users\{name[1]}\AppData\Local\Microsoft\Windows\Explorer",
-            $@"C:\Users\{name[1]}\AppData\Local\CrashDumps",
-            @"C:\Windows\System32\LogFiles"
-        };
+        @"C:\Windows\Prefetch",
+        @"C:\Windows\SoftwareDistribution\Download",
+        @"C:\Windows\Temp",
+        $@"C:\Users\{name[1]}\AppData\Local\Temp",
+        $@"C:\Users\{name[1]}\AppData\Local\Microsoft\Windows\INetCache",
+        $@"C:\Users\{name[1]}\AppData\Local\Microsoft\Windows\Explorer",
+        $@"C:\Users\{name[1]}\AppData\Local\CrashDumps",
+        @"C:\Windows\System32\LogFiles"
+    };
 
             List<string> allItems = new();
+            Progress.IsIndeterminate = true;
+            message.Visibility = Visibility.Visible;
+            countNum.Visibility = Visibility.Visible;
 
-            // Run the directory fetch in a background task
+            // Background scan
             await Task.Run(() =>
             {
                 foreach (string path in paths)
                 {
-                    var items = Dirfinder.DirandFile(path);
-                    allItems.AddRange(items);
+                    var items = Dirfinder.DirandFile(path, msg =>
+                    {
+                        Application.Current.Dispatcher.Invoke(() =>
+                        {
+                            message.Text = msg.Message;
+                            countNum.Text = $"{msg.Count} files Found";
+                            intit = msg.Count;
+                        });
+                    });
+
+                    if (items != null)
+                        allItems.AddRange(items);
                 }
             });
 
-            double unitStep = 396.0 / allItems.Count;
+            double unitStep = allItems.Count > 0 ? 396.0 / allItems.Count : 0;
             double current = 0;
+
             Percent.Visibility = Visibility.Visible;
-            // Now process the items and update the UI thread in real-time
+            Progress.IsIndeterminate = false;
+            Progress.ApplyTemplate();
+
+            Check.Content = "Adding";
+            countNum.Visibility = Visibility.Hidden;
+
+            // Buffered UI updates
+            const int updateInterval = 100;
+            List<string> buffer = new();
+            var sw = Stopwatch.StartNew();
+
             foreach (var item in allItems)
             {
-                // Update the UI thread with Dispatcher.Invoke
-                Dispatcher.Invoke(() =>
-                {
-                    FullList.Add(item);
-                    Logs.Document.Blocks.Add(new Paragraph(new Run(item)));
-                    current += unitStep;
-                    Progress.Value = current;
-                    Logs.ScrollToEnd();
-                    Percent.Text = $"{Math.Round((current / 396.0) * 100, 2)}%";
-                });
+                buffer.Add(item);
+                FullList.Add(item); // internal tracking
+                current += unitStep;
+                cnt++;
 
-                // To avoid blocking UI, delay a bit before the next UI update
-                await Task.Delay(10); // Delay to give time for UI to update
+                if (buffer.Count >= updateInterval || sw.ElapsedMilliseconds > 200)
+                {
+                    var currentBatch = new List<string>(buffer);
+                    buffer.Clear();
+
+                    await Dispatcher.InvokeAsync(() =>
+                    {
+                        foreach (var logItem in currentBatch)
+                            Logs.Items.Add(logItem);
+
+                        Logs.ScrollIntoView(currentBatch[^1]);
+                        Progress.Value = current;
+                        Percent.Text = $"{Math.Round((current / 396.0) * 100, 2)}%";
+                        message.Text = $"{cnt}/{intit} files Added";
+                    });
+
+                    sw.Restart();
+                }
+
+                await Task.Delay(1); // yield for UI
             }
+
+            // Flush remaining items
+            if (buffer.Count > 0)
+            {
+                await Dispatcher.InvokeAsync(() =>
+                {
+                    foreach (var logItem in buffer)
+                        Logs.Items.Add(logItem);
+
+                    Logs.ScrollIntoView(buffer[^1]);
+                    Progress.Value = current;
+                    Percent.Text = $"{Math.Round((current / 396.0) * 100, 2)}%";
+                    message.Text = $"{cnt}/{intit} files Added";
+                });
+            }
+
             Check.Content = "Checked";
+            message.Text = "Ready To Remove";
+
             if (allItems.Count > 0)
             {
                 Clear.IsEnabled = true;
+                Clear.Cursor = Cursors.Hand;
             }
-
-
         }
+
+
         private async void Clear_Click(object sender, RoutedEventArgs e)
         {
             Percent.Visibility = Visibility.Visible;
-            Logs.Document.Blocks.Clear();
-
-            double unitStep = 396.0 / FullList.Count;
+            Logs.Items.Clear();
+            Clear.Content = "Clearing";
+            Clear.IsEnabled = false;
+            Clear.Cursor = Cursors.No;
+            int num = 0;
+            int len = FullList.Count;
+            message.Visibility = Visibility.Visible;
+            double unitStep = FullList.Count > 0 ? 396.0 / FullList.Count : 0;
             double current = 0;
+
+            List<string> buffer = new();
+            var sw = Stopwatch.StartNew();
 
             await Task.Run(async () =>
             {
                 foreach (var del in FullList)
                 {
-                    if (File.Exists(del))
+                    string log;
+                    try
                     {
-                        try
+                        if (File.Exists(del))
                         {
-                            GC.Collect();
-                            GC.WaitForPendingFinalizers();
                             File.Delete(del);
-
-                            Dispatcher.Invoke(() =>
-                            {
-                                Logs.Document.Blocks.Add(new Paragraph(new Run($"✔ Deleted file: {del}")));
-                                Progress.Value = current += unitStep;
-                                Logs.ScrollToEnd();
-                                Percent.Text = $"{Math.Round((current / 396.0) * 100, 2)}%";
-                            });
+                            log = $"✔ Deleted file: {del}";
                         }
-                        catch
-                        {
-                            Dispatcher.Invoke(() =>
-                            {
-                                Logs.Document.Blocks.Add(new Paragraph(new Run($"❌ Failed to delete file: {del}")));
-                                Progress.Value = current += unitStep;
-                                Logs.ScrollToEnd();
-                                Percent.Text = $"{Math.Round((current / 396.0) * 100, 2)}%"; ;
-                            });
-                        }
-                    }
-                    else if (Directory.Exists(del))
-                    {
-                        try
+                        else if (Directory.Exists(del))
                         {
                             Directory.Delete(del, true);
-                            Dispatcher.Invoke(() =>
-                            {
-                                Logs.Document.Blocks.Add(new Paragraph(new Run($"✔ Deleted directory: {del}")));
-                                Progress.Value = current += unitStep;
-                                Logs.ScrollToEnd();
-                                Percent.Text = $"{Math.Round((current / 396.0) * 100, 2)}%";
-                            });
+                            log = $"✔ Deleted directory: {del}";
                         }
-                        catch
+                        else
                         {
-                            Dispatcher.Invoke(() =>
-                            {
-                                Logs.Document.Blocks.Add(new Paragraph(new Run($"❌ Failed to delete directory: {del}")));
-                                Progress.Value = current += unitStep;
-                                Logs.ScrollToEnd();
-                                Percent.Text = $"{Math.Round((current / 396.0) * 100, 2)}%";
-                            });
+                            log = $"⚠ Not found: {del}";
                         }
                     }
-                    else
+                    catch
                     {
-                        Dispatcher.Invoke(() =>
-                        {
-                            Progress.Value = current += unitStep;
-                            Percent.Text = $"{Math.Round((current / 396.0) * 100, 2)}%";
-                        });
+                        log = $"❌ Failed to delete: {del}";
                     }
 
-                    // Add a short delay (e.g., 100 ms)
-                    await Task.Delay(100);
+                    current += unitStep;
+                    buffer.Add(log);
+                    num++;
+
+                    if (buffer.Count >= 50 || sw.ElapsedMilliseconds > 300)
+                    {
+                        var batch = new List<string>(buffer);
+                        buffer.Clear();
+
+                        await Dispatcher.InvokeAsync(() =>
+                        {
+                            foreach (var msg in batch)
+                                Logs.Items.Add(msg);
+
+                            Logs.ScrollIntoView(batch[^1]);
+                            Progress.Value = current;
+                            Percent.Text = $"{Math.Round((current / 396.0) * 100, 2)}%";
+                            message.Text = $"{num}/{len} files Deleted";
+
+                        });
+
+                        sw.Restart();
+                    }
+                }
+
+                // Final flush
+                if (buffer.Count > 0)
+                {
+                    var finalBatch = new List<string>(buffer);
+                    await Dispatcher.InvokeAsync(() =>
+                    {
+                        foreach (var msg in finalBatch)
+                            Logs.Items.Add(msg);
+
+                        Logs.ScrollIntoView(finalBatch[^1]);
+                        Progress.Value = current;
+                        Percent.Text = $"{Math.Round((current / 396.0) * 100, 2)}%";
+                        message.Text = $"{num}/{len} files Deleted";
+                    });
                 }
             });
 
@@ -203,11 +284,11 @@ namespace TempCleaner
 
             Dispatcher.Invoke(() =>
             {
-                Logs.Document.Blocks.Add(new Paragraph(new Run("🎉 Clean up completed!")));
-                Logs.ScrollToEnd();
+                Logs.Items.Add("🎉 Clean up completed!");
+                Logs.ScrollIntoView("🎉 Clean up completed!");
+                Clear.Content = "Cleared";
             });
-
-            Clear.IsEnabled = false;
         }
+
     }
 }

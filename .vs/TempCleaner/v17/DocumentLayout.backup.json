@@ -3,16 +3,28 @@
   "WorkspaceRootPath": "C:\\Users\\anmon\\OneDrive\\Documents\\Visual Studio 2022\\Projects\\TempCleaner\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{4C7558EB-4379-4559-9A79-0BE7BAD7E07F}|TempCleaner.csproj|c:\\users\\anmon\\onedrive\\documents\\visual studio 2022\\projects\\tempcleaner\\tempcleaner.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{4C7558EB-4379-4559-9A79-0BE7BAD7E07F}|TempCleaner.csproj|solutionrelative:tempcleaner.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4C7558EB-4379-4559-9A79-0BE7BAD7E07F}|TempCleaner.csproj|c:\\users\\anmon\\onedrive\\documents\\visual studio 2022\\projects\\tempcleaner\\assemblyinfo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{4C7558EB-4379-4559-9A79-0BE7BAD7E07F}|TempCleaner.csproj|solutionrelative:assemblyinfo.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\anmon\\OneDrive\\Documents\\Visual Studio 2022\\Projects\\TempCleaner\\.github\\workflows\\release.yml||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:.github\\workflows\\release.yml||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{4C7558EB-4379-4559-9A79-0BE7BAD7E07F}|TempCleaner.csproj|c:\\users\\anmon\\onedrive\\documents\\visual studio 2022\\projects\\tempcleaner\\mainwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{4C7558EB-4379-4559-9A79-0BE7BAD7E07F}|TempCleaner.csproj|solutionrelative:mainwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{4C7558EB-4379-4559-9A79-0BE7BAD7E07F}|TempCleaner.csproj|c:\\users\\anmon\\onedrive\\documents\\visual studio 2022\\projects\\tempcleaner\\mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
-      "RelativeMoniker": "D:0:0:{4C7558EB-4379-4559-9A79-0BE7BAD7E07F}|TempCleaner.csproj|solutionrelative:mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+      "AbsoluteMoniker": "D:0:0:{4C7558EB-4379-4559-9A79-0BE7BAD7E07F}|TempCleaner.csproj|c:\\users\\anmon\\onedrive\\documents\\visual studio 2022\\projects\\tempcleaner\\app.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{4C7558EB-4379-4559-9A79-0BE7BAD7E07F}|TempCleaner.csproj|solutionrelative:app.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{4C7558EB-4379-4559-9A79-0BE7BAD7E07F}|TempCleaner.csproj|c:\\users\\anmon\\onedrive\\documents\\visual studio 2022\\projects\\tempcleaner\\dirfinder.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{4C7558EB-4379-4559-9A79-0BE7BAD7E07F}|TempCleaner.csproj|solutionrelative:dirfinder.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{4C7558EB-4379-4559-9A79-0BE7BAD7E07F}|TempCleaner.csproj|c:\\users\\anmon\\onedrive\\documents\\visual studio 2022\\projects\\tempcleaner\\app.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{4C7558EB-4379-4559-9A79-0BE7BAD7E07F}|TempCleaner.csproj|solutionrelative:app.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
     }
   ],
   "DocumentGroupContainers": [
@@ -22,7 +34,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 4,
+          "SelectedChildIndex": 7,
           "Children": [
             {
               "$type": "Bookmark",
@@ -34,38 +46,79 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "DirFinder.cs",
-              "DocumentMoniker": "C:\\Users\\anmon\\OneDrive\\Documents\\Visual Studio 2022\\Projects\\TempCleaner\\DirFinder.cs",
-              "RelativeDocumentMoniker": "DirFinder.cs",
-              "ToolTip": "C:\\Users\\anmon\\OneDrive\\Documents\\Visual Studio 2022\\Projects\\TempCleaner\\DirFinder.cs",
-              "RelativeToolTip": "DirFinder.cs",
-              "ViewState": "AgIAABMAAAAAAAAAAAAuwB4AAAAcAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-22T07:41:44.027Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "MainWindow.xaml",
-              "DocumentMoniker": "C:\\Users\\anmon\\OneDrive\\Documents\\Visual Studio 2022\\Projects\\TempCleaner\\MainWindow.xaml",
-              "RelativeDocumentMoniker": "MainWindow.xaml",
-              "ToolTip": "C:\\Users\\anmon\\OneDrive\\Documents\\Visual Studio 2022\\Projects\\TempCleaner\\MainWindow.xaml",
-              "RelativeToolTip": "MainWindow.xaml",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
-              "WhenOpened": "2025-04-22T07:39:47.879Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 3,
               "Title": "MainWindow.xaml.cs",
               "DocumentMoniker": "C:\\Users\\anmon\\OneDrive\\Documents\\Visual Studio 2022\\Projects\\TempCleaner\\MainWindow.xaml.cs",
               "RelativeDocumentMoniker": "MainWindow.xaml.cs",
               "ToolTip": "C:\\Users\\anmon\\OneDrive\\Documents\\Visual Studio 2022\\Projects\\TempCleaner\\MainWindow.xaml.cs",
               "RelativeToolTip": "MainWindow.xaml.cs",
-              "ViewState": "AgIAAMAAAAAAAAAAAAAAwHQAAAAkAAAAAAAAAA==",
+              "ViewState": "AgIAABYAAAAAAAAAAAAAACQAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-22T07:39:45.322Z",
+              "WhenOpened": "2025-04-24T13:50:05.528Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "App.xaml.cs",
+              "DocumentMoniker": "C:\\Users\\anmon\\OneDrive\\Documents\\Visual Studio 2022\\Projects\\TempCleaner\\App.xaml.cs",
+              "RelativeDocumentMoniker": "App.xaml.cs",
+              "ToolTip": "C:\\Users\\anmon\\OneDrive\\Documents\\Visual Studio 2022\\Projects\\TempCleaner\\App.xaml.cs",
+              "RelativeToolTip": "App.xaml.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-24T13:49:37.279Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "App.xaml",
+              "DocumentMoniker": "C:\\Users\\anmon\\OneDrive\\Documents\\Visual Studio 2022\\Projects\\TempCleaner\\App.xaml",
+              "RelativeDocumentMoniker": "App.xaml",
+              "ToolTip": "C:\\Users\\anmon\\OneDrive\\Documents\\Visual Studio 2022\\Projects\\TempCleaner\\App.xaml",
+              "RelativeToolTip": "App.xaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2025-04-24T13:49:29.818Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "AssemblyInfo.cs",
+              "DocumentMoniker": "C:\\Users\\anmon\\OneDrive\\Documents\\Visual Studio 2022\\Projects\\TempCleaner\\AssemblyInfo.cs",
+              "RelativeDocumentMoniker": "AssemblyInfo.cs",
+              "ToolTip": "C:\\Users\\anmon\\OneDrive\\Documents\\Visual Studio 2022\\Projects\\TempCleaner\\AssemblyInfo.cs",
+              "RelativeToolTip": "AssemblyInfo.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAACAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-24T13:49:18.135Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "release.yml",
+              "DocumentMoniker": "C:\\Users\\anmon\\OneDrive\\Documents\\Visual Studio 2022\\Projects\\TempCleaner\\.github\\workflows\\release.yml",
+              "RelativeDocumentMoniker": ".github\\workflows\\release.yml",
+              "ToolTip": "C:\\Users\\anmon\\OneDrive\\Documents\\Visual Studio 2022\\Projects\\TempCleaner\\.github\\workflows\\release.yml",
+              "RelativeToolTip": ".github\\workflows\\release.yml",
+              "ViewState": "AgIAACEAAAAAAAAAAAAAADQAAAA9AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003775|",
+              "WhenOpened": "2025-04-24T13:44:41.422Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "TempCleaner",
+              "DocumentMoniker": "C:\\Users\\anmon\\OneDrive\\Documents\\Visual Studio 2022\\Projects\\TempCleaner\\TempCleaner.csproj",
+              "RelativeDocumentMoniker": "TempCleaner.csproj",
+              "ToolTip": "C:\\Users\\anmon\\OneDrive\\Documents\\Visual Studio 2022\\Projects\\TempCleaner\\TempCleaner.csproj*",
+              "RelativeToolTip": "TempCleaner.csproj*",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAVAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2025-04-24T13:44:01.719Z",
               "EditorCaption": ""
             }
           ]

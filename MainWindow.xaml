@@ -118,53 +118,100 @@
                 </Button>
             </Grid>
             <StackPanel Grid.Row="1" Width="550">
-                <Image Source="pack://application:,,,/Images/Designer.png" Width="150" />
+                <Image Source="pack://application:,,,/Images/Designer.png" Width="110" />
                 <TextBlock Text="Tepm Cleaner" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="35" Foreground="White" FontWeight="Bold" Margin="0 10 0 0"/>
-                <ProgressBar x:Name="Progress"  
-                            Height="40"  
-                            Margin="20 10"  
-                            Value="0"  
-                            Width="400"    
-                            Background="#1e2939"  
-                            BorderBrush="#101828"  
-                            BorderThickness="2"  
-                            Padding="5"  
-                            Maximum="400"  
-                            Minimum="0">
+                <ProgressBar x:Name="Progress"
+             Height="40"
+             Margin="20 10"
+             Value="0"
+             Width="400"
+             Background="#1e2939"
+             BorderBrush="#101828"
+             BorderThickness="2"
+             Padding="5"
+             Maximum="400"
+             Minimum="0"
+             IsIndeterminate="False">
+                    <ProgressBar.Resources>
+                        <Storyboard x:Key="ShimmerAnimation" RepeatBehavior="Forever">
+                            <DoubleAnimation
+                Storyboard.TargetName="Shimmer"
+                Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+                From="-700" To="500"
+                Duration="0:0:2.2" />
+                        </Storyboard>
+                    </ProgressBar.Resources>
+
                     <ProgressBar.Template>
                         <ControlTemplate TargetType="ProgressBar">
-                            <Grid>
+                            <Grid ClipToBounds="True">
                                 <Border Background="{TemplateBinding Background}"  
-                                       CornerRadius="20"  
-                                       BorderBrush="{TemplateBinding BorderBrush}"  
-                                       BorderThickness="{TemplateBinding BorderThickness}"/>
-                                <Border CornerRadius="20"  
-                                      HorizontalAlignment="Left"  
-                                      Width="{TemplateBinding Value}"  
-                                      Margin="2">
-                                    <Border.Triggers>
-                                        <EventTrigger RoutedEvent="ProgressBar.ValueChanged">
-                                            <BeginStoryboard>
-                                                <Storyboard>
-                                                    <DoubleAnimation Storyboard.TargetProperty="Width" 
-                                                                   To="{TemplateBinding Value}" 
-                                                                   Duration="0:0:0.5" />
-                                                </Storyboard>
-                                            </BeginStoryboard>
-                                        </EventTrigger>
-                                    </Border.Triggers>
-                                    <Border.Background>
-                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                            <GradientStop Color="#8a0194" Offset="0.0"/>
-                                            <GradientStop Color="#a800b7" Offset="0.5"/>
-                                            <GradientStop Color="#e12afb" Offset="1.0"/>
-                                        </LinearGradientBrush>
-                                    </Border.Background>
+                       CornerRadius="20"  
+                       BorderBrush="{TemplateBinding BorderBrush}"  
+                       BorderThickness="{TemplateBinding BorderThickness}"
+                       ClipToBounds="True">
+                                    <Grid>
+                                        <Rectangle x:Name="Shimmer"
+                                   Opacity="0.8"
+                                   RadiusX="20"
+                                   RadiusY="20"
+                                   Height="40"
+                                   Width="60"
+                                   Visibility="Collapsed">
+                                            <Rectangle.RenderTransform>
+                                                <TranslateTransform X="-400" />
+                                            </Rectangle.RenderTransform>
+                                            <Rectangle.Fill>
+                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                    <GradientStop Color="#8a0194" Offset="0.0"/>
+                                                    <GradientStop Color="#a800b7" Offset="0.5"/>
+                                                    <GradientStop Color="#e12afb" Offset="1.0"/>
+                                                </LinearGradientBrush>
+                                            </Rectangle.Fill>
+                                        </Rectangle>
+
+                                        <Border x:Name="PART_Track" 
+                                CornerRadius="20" 
+                                HorizontalAlignment="Left" 
+                                Width="{TemplateBinding Value}" 
+                                Margin="2" 
+                                ClipToBounds="True">
+                                            <Border.Background>
+                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                    <GradientStop Color="#8a0194" Offset="0.0"/>
+                                                    <GradientStop Color="#a800b7" Offset="0.5"/>
+                                                    <GradientStop Color="#e12afb" Offset="1.0"/>
+                                                </LinearGradientBrush>
+                                            </Border.Background>
+                                        </Border>
+                                    </Grid>
                                 </Border>
                             </Grid>
+
+                            <ControlTemplate.Triggers>
+                                <!-- Indeterminate State: Show shimmer, hide progress bar -->
+                                <Trigger Property="IsIndeterminate" Value="True">
+                                    <Setter TargetName="Shimmer" Property="Visibility" Value="Visible"/>
+                                    <Setter TargetName="PART_Track" Property="Visibility" Value="Collapsed"/>
+                                    <Trigger.EnterActions>
+                                        <BeginStoryboard Storyboard="{StaticResource ShimmerAnimation}" />
+                                    </Trigger.EnterActions>
+                                </Trigger>
+
+                                <!-- Determinate State: Hide shimmer, show progress bar -->
+                                <Trigger Property="IsIndeterminate" Value="False">
+                                    <Setter TargetName="Shimmer" Property="Visibility" Value="Collapsed"/>
+                                    <Setter TargetName="PART_Track" Property="Visibility" Value="Visible"/>
+                                </Trigger>
+
+                                <Trigger Property="Value" Value="0">
+                                    <Setter TargetName="Shimmer" Property="Visibility" Value="Visible"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
                         </ControlTemplate>
                     </ProgressBar.Template>
                 </ProgressBar>
+
                 <TextBlock
                     x:Name="Percent"
                     Text="99"
@@ -173,6 +220,7 @@
                     HorizontalAlignment="Center"
                     Margin="0 -44 0 0"
                     Visibility="Hidden"
+                    
                     />
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -220,7 +268,7 @@
                        HorizontalAlignment="Center"
                        Padding="20 10"
                        Grid.Column="1"
-                       Cursor="Hand"
+                       Cursor="No"
                        Foreground="White" 
                        FontSize="20" 
                        Width="110" 
@@ -253,7 +301,34 @@
                     </Button>
 
                 </Grid>
-                <RichTextBox x:Name="Logs"  
+                
+                <TextBlock x:Name="message" 
+                           Text="Starting"
+                           Foreground="White"
+                           FontSize="16"
+                           Margin="0 10 0 0"
+                           Visibility="Hidden"
+                           TextTrimming="CharacterEllipsis"
+                            TextWrapping="NoWrap"
+                            TextAlignment="Left"
+                            VerticalAlignment="Center"
+                            HorizontalAlignment="Center"
+                            ClipToBounds="True"
+                           />
+                <TextBlock x:Name="countNum" 
+                           Text=""
+                           Foreground="White"
+                           FontSize="16"
+                           Margin="0 -100 0 0"
+                           Visibility="Hidden"
+                           TextTrimming="CharacterEllipsis"
+                            TextWrapping="NoWrap"
+                            TextAlignment="Left"
+                            VerticalAlignment="Center"
+                            HorizontalAlignment="Center"
+                            ClipToBounds="True"
+                           />
+                <!--<RichTextBox x:Name="Logs"  
                             Margin="20 10"  
                             VerticalScrollBarVisibility="Auto"  
                             IsReadOnly="True"  
@@ -262,21 +337,39 @@
                             Foreground="White">
                     <RichTextBox.Resources>
                         <Style TargetType="{x:Type ScrollBar}">
+                            <Setter Property="SnapsToDevicePixels" Value="True"/>
+                            <Setter Property="OverridesDefaultStyle" Value="True"/>
                             <Setter Property="Template">
                                 <Setter.Value>
                                     <ControlTemplate TargetType="{x:Type ScrollBar}">
-                                        <Grid>
-                                            <Rectangle Fill="#1e2939" />
-                                            <Track Name="PART_Track"  
-                                                  IsDirectionReversed="False">
+                                        <Grid Background="#1e2939">
+                                            <Track Name="PART_Track"
+                               IsDirectionReversed="False">
                                                 <Track.DecreaseRepeatButton>
                                                     <RepeatButton Style="{x:Null}" />
                                                 </Track.DecreaseRepeatButton>
                                                 <Track.Thumb>
-                                                    <Thumb Background="#615fff"  
-                                                          BorderBrush="#372aac"  
-                                                          BorderThickness="1"  
-                                                          />
+                                                    <Thumb>
+                                                        <Thumb.Template>
+                                                            <ControlTemplate TargetType="Thumb">
+                                                                <Border x:Name="thumbBorder"
+                                                    Background="#615fff"
+                                                    BorderBrush="#372aac"
+                                                    BorderThickness="1"
+                                                    CornerRadius="4"
+                                                    Margin="2">
+                                                                </Border>
+                                                                <ControlTemplate.Triggers>
+                                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                                        <Setter TargetName="thumbBorder" Property="Background" Value="#7d73ff"/>
+                                                                    </Trigger>
+                                                                    <Trigger Property="IsDragging" Value="True">
+                                                                        <Setter TargetName="thumbBorder" Property="Background" Value="#a9a2ff"/>
+                                                                    </Trigger>
+                                                                </ControlTemplate.Triggers>
+                                                            </ControlTemplate>
+                                                        </Thumb.Template>
+                                                    </Thumb>
                                                 </Track.Thumb>
                                                 <Track.IncreaseRepeatButton>
                                                     <RepeatButton Style="{x:Null}" />
@@ -288,7 +381,86 @@
                             </Setter>
                         </Style>
                     </RichTextBox.Resources>
-                </RichTextBox>
+
+                </RichTextBox>-->
+                <ListBox x:Name="Logs"
+                         
+         Margin="20 10"
+         Background="Transparent"
+         Height="170"
+         Foreground="White"
+         BorderThickness="2"
+         FontFamily="Consolas"
+         FontSize="13"
+         IsHitTestVisible="False"
+         ScrollViewer.VerticalScrollBarVisibility="Auto"
+         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+         VirtualizingPanel.IsVirtualizing="True"
+         VirtualizingPanel.VirtualizationMode="Recycling"
+         ScrollViewer.CanContentScroll="True">
+
+                    <!-- Custom Scrollbar Style -->
+                    <ListBox.Resources>
+                        <Style TargetType="{x:Type ScrollBar}">
+                            <Setter Property="SnapsToDevicePixels" Value="True"/>
+                            <Setter Property="OverridesDefaultStyle" Value="True"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ScrollBar">
+                                        <Grid Background="#1e2939">
+                                            <Track Name="PART_Track" IsDirectionReversed="False">
+                                                <Track.DecreaseRepeatButton>
+                                                    <RepeatButton Style="{x:Null}" />
+                                                </Track.DecreaseRepeatButton>
+                                                <Track.Thumb>
+                                                    <Thumb>
+                                                        <Thumb.Template>
+                                                            <ControlTemplate TargetType="Thumb">
+                                                                <Border x:Name="thumbBorder"
+                                                        Background="#615fff"
+                                                        BorderBrush="#372aac"
+                                                        BorderThickness="1"
+                                                        CornerRadius="4"
+                                                        Margin="2"/>
+                                                                <ControlTemplate.Triggers>
+                                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                                        <Setter TargetName="thumbBorder" Property="Background" Value="#7d73ff"/>
+                                                                    </Trigger>
+                                                                    <Trigger Property="IsDragging" Value="True">
+                                                                        <Setter TargetName="thumbBorder" Property="Background" Value="#a9a2ff"/>
+                                                                    </Trigger>
+                                                                </ControlTemplate.Triggers>
+                                                            </ControlTemplate>
+                                                        </Thumb.Template>
+                                                    </Thumb>
+                                                </Track.Thumb>
+                                                <Track.IncreaseRepeatButton>
+                                                    <RepeatButton Style="{x:Null}" />
+                                                </Track.IncreaseRepeatButton>
+                                            </Track>
+                                        </Grid>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ListBox.Resources>
+
+                    <!-- Enable Virtualization -->
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <VirtualizingStackPanel />
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+
+                    <!-- Wrap each item -->
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding}" TextWrapping="Wrap" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+
             </StackPanel>
         </Grid>
     </Border>

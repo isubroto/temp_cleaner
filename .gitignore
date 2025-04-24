@@ -398,4 +398,7 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+*.db
+*.v2
+
 !Deployment/**

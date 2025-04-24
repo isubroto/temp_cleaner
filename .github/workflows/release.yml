@@ -38,15 +38,50 @@ jobs:
         uses: gittools/actions/gitversion/execute@v0.11.0
 
       - name: Update .csproj Version
+        shell: pwsh
         run: |
-          $projFile = Get-ChildItem -Recurse -Filter *.csproj | Select-Object -First 1
-          $content = Get-Content $projFile.FullName
-          if ($content -notmatch '<Version>') {
-            $content = $content -replace '</PropertyGroup>', "<Version>${{ steps.gitversion.outputs.FullSemVer }}</Version>`n</PropertyGroup>"
+            $projFile = Get-ChildItem -Recurse -Filter *.csproj | Select-Object -First 1
+            Write-Host "Updating version in: $($projFile.FullName)"
+
+            $versionTag = "<Version>${{ steps.gitversion.outputs.FullSemVer }}</Version>"
+
+            # Read original content
+            $content = Get-Content $projFile.FullName -Raw
+
+            if ($content -notmatch '<Version>.*?</Version>') {
+                # Insert <Version> before </PropertyGroup>
+                $content = $content -replace '</PropertyGroup>', "$versionTag`n</PropertyGroup>"
+            } else {
+                # Replace existing <Version>
+                $content = $content -replace '<Version>.*?</Version>', $versionTag
+            }
+
+            # Write updated content back
+            Set-Content $projFile.FullName $content -Encoding UTF8
+
+            # Verify the updated version
+            Get-Content $projFile.FullName | Select-String "<Version>"
+
+
+      - name: Commit & Push .csproj version change (if any)
+        shell: pwsh
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+          # Stage the .csproj file if modified
+          git add $env:project
+
+          # Check for staged changes
+          if (git diff --cached --quiet) {
+            Write-Host "?? No changes to commit. Version already up to date."
           } else {
-            $content = $content -replace '<Version>.*?</Version>', "<Version>${{ steps.gitversion.outputs.FullSemVer }}</Version>"
+            $version = "${{ steps.gitversion.outputs.FullSemVer }}"
+            git commit -m "?? Bump version to $version"
+            git push origin HEAD
+            Write-Host "? Committed and pushed updated .csproj version: $version"
           }
-          Set-Content $projFile.FullName $content
+
 
       - name: Restore Dependencies
         run: dotnet restore ${{env.project}} -r win-x64
