@@ -28,7 +28,7 @@
       <File Source="..\bin\Release\net8.0-windows\win-x64\TempCleaner.exe" />
     </Component>
 
-    <Component Id="DesktopShortcut" Directory="DesktopShortcutDir" Guid="*"  Win64="yes">
+    <Component Id="DesktopShortcut" Directory="DesktopShortcutDir" Guid="*">
       <Shortcut Id="DesktopAppShortcut"
                 Name="Temp Cleaner"
                 Target="[INSTALLFOLDER]TempCleaner.exe"
