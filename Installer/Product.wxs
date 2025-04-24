@@ -4,12 +4,15 @@
   <Package Name="Temp Cleaner"
            Manufacturer="Subroto Saha"
            Version="$(var.ProductVersion)"
-           UpgradeCode="8ed2b67f-6148-4943-97a2-49d4c7a7dfec">
+           UpgradeCode="8ed2b67f-6148-4943-97a2-49d4c7a7dfec"
+           Platform="x64">
     <Media Id="1" Cabinet="media1.cab" EmbedCab="yes" />
 
     <!-- Directories -->
-    <StandardDirectory Id="ProgramFilesFolder">
-      <Directory Id="INSTALLFOLDER" Name="Temp_Cleaner" />
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="subroto" Name="Subroto Saha">
+        <Directory Id="INSTALLFOLDER" Name="Temp Cleaner" />
+      </Directory>
     </StandardDirectory>
 
     <StandardDirectory Id="DesktopFolder">
@@ -25,7 +28,7 @@
       <File Source="..\bin\Release\net8.0-windows\win-x64\TempCleaner.exe" />
     </Component>
 
-    <Component Id="DesktopShortcut" Directory="DesktopShortcutDir" Guid="*">
+    <Component Id="DesktopShortcut" Directory="DesktopShortcutDir" Guid="*"  Win64="yes">
       <Shortcut Id="DesktopAppShortcut"
                 Name="Temp Cleaner"
                 Target="[INSTALLFOLDER]TempCleaner.exe"
