@@ -1,8 +1,8 @@
-﻿
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Input;
 // To fix the CS0246 error, you need to ensure that the Squirrel NuGet package is installed in your project.  
@@ -33,8 +33,17 @@ namespace TempCleaner
         {
             InitializeComponent();
             var currentVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
-            MessageBox.Show(currentVersion, "Version Information", MessageBoxButton.OK, MessageBoxImage.Information);
-
+        }
+        private async Task<GetInformations> InitializeGitHubUpdaterAsync(string token)
+        {
+            var latest = await GitHubUpdater.GetLatestReleaseVersionAsync("isubroto", "temp_cleaner", token);
+            return latest; // Ensure this method returns a string
+        }
+        public static AppSettings LoadSettings()
+        {
+            var json = File.ReadAllText("./appsettings.json");
+            var settings = JsonSerializer.Deserialize<AppSettings>(json);
+            return settings;
         }
 
         [DllImport("Shell32.dll", SetLastError = true)]
@@ -287,8 +296,25 @@ namespace TempCleaner
                 Logs.Items.Add("🎉 Clean up completed!");
                 Logs.ScrollIntoView("🎉 Clean up completed!");
                 Clear.Content = "Cleared";
+                Check.Content = "Check";
             });
         }
 
+        private async void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            await Task.Yield();
+            var version = await InitializeGitHubUpdaterAsync(LoadSettings().GitHub.Token); // Await the task to get the result
+            var result = GitHubUpdater.CompareVersions(Assembly.GetExecutingAssembly().GetName().Version.ToString(), version.Version);
+            if (result < 0)
+            {
+                MessageBoxResult res = MessageBox.Show("An update is available!\n do you want to Download", "Update !", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                if (res == MessageBoxResult.Yes)
+                {
+                    GitHubUpdater.OpenUrlInDefaultBrowser(version.Url);
+                }
+            }
+
+
+        }
     }
 }

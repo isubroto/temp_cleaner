@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "TempCleaner": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}
