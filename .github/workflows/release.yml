@@ -1,4 +1,4 @@
-name: Release WPF App with MSI
+﻿name: Release WPF App with MSI
 
 on:
   push:
@@ -66,20 +66,20 @@ jobs:
       - name: Commit & Push .csproj version change (if any)
         shell: pwsh
         run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
+          git config user.name "Subroto Saha"
+          git config user.email "isubrotosaha@gmail.com"
 
           # Stage the .csproj file if modified
           git add $env:project
 
           # Check for staged changes
           if (git diff --cached --quiet) {
-            Write-Host "?? No changes to commit. Version already up to date."
+            Write-Host "🟢 No changes to commit. Version already up to date."
           } else {
             $version = "${{ steps.gitversion.outputs.FullSemVer }}"
-            git commit -m "?? Bump version to $version"
+            git commit -m "🔖 Bump version to $version"
             git push origin HEAD
-            Write-Host "? Committed and pushed updated .csproj version: $version"
+            Write-Host "✅ Committed and pushed updated .csproj version: $version"
           }
 
 
