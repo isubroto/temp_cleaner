@@ -307,7 +307,7 @@ namespace TempCleaner
             var result = GitHubUpdater.CompareVersions(Assembly.GetExecutingAssembly().GetName().Version.ToString(), version.Version);
             if (result < 0)
             {
-                MessageBoxResult res = MessageBox.Show("An update is available!\n do you want to Download", "Update !", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                MessageBoxResult res = MessageBox.Show($@"An update is available!{Environment.NewLine}Current Version: {Assembly.GetExecutingAssembly().GetName().Version.ToString()}{Environment.NewLine}Latest Version: {version.Version}{Environment.NewLine}Do you want to download?", "Update !", MessageBoxButton.YesNo, MessageBoxImage.Question);
                 if (res == MessageBoxResult.Yes)
                 {
                     GitHubUpdater.OpenUrlInDefaultBrowser(version.Url);
