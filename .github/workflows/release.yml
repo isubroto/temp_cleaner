@@ -14,6 +14,7 @@ env:
   project: ./TempCleaner.csproj
 jobs:
   release:
+    if: ${{ github.actor != 'github-actions' }}
     runs-on: windows-latest
     name: Build and Release WPF App with MSI
 
@@ -42,8 +43,11 @@ jobs:
         run: |
             $projFile = Get-ChildItem -Recurse -Filter *.csproj | Select-Object -First 1
             Write-Host "Updating version in: $($projFile.FullName)"
-
-            $versionTag = "<Version>${{ steps.gitversion.outputs.FullSemVer }}</Version>"
+            $version = "${{ steps.gitversion.outputs.FullSemVer }}"
+          
+            # Replace '+' with '.' in version to make it safe for file naming
+            $safeVersion = $version -replace '\+', '.'
+            $versionTag = "<Version>$safeVersion</Version>"
 
             # Read original content
             $content = Get-Content $projFile.FullName -Raw
@@ -77,9 +81,10 @@ jobs:
             Write-Host "🟢 No changes to commit. Version already up to date."
           } else {
             $version = "${{ steps.gitversion.outputs.FullSemVer }}"
-            git commit -m "🔖 Bump version to $version"
+            $safeVersion = $version -replace '\+', '.'
+            git commit -m "🔖 Bump version to $safeVersion"
             git push origin HEAD
-            Write-Host "✅ Committed and pushed updated .csproj version: $version"
+            Write-Host "✅ Committed and pushed updated .csproj version: $safeVersion"
           }
 
 
