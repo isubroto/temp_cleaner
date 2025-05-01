@@ -41,52 +41,30 @@ jobs:
       - name: Update .csproj Version
         shell: pwsh
         run: |
-            $projFile = Get-ChildItem -Recurse -Filter *.csproj | Select-Object -First 1
-            Write-Host "Updating version in: $($projFile.FullName)"
-            $version = "${{ steps.gitversion.outputs.FullSemVer }}"
-          
-            # Replace '+' with '.' in version to make it safe for file naming
-            $safeVersion = $version -replace '\+', '.'
-            $versionTag = "<Version>$safeVersion</Version>"
+          $projFile = Get-ChildItem -Recurse -Filter *.csproj | Select-Object -First 1
+          Write-Host "Updating version in: $($projFile.FullName)"
+          $version = "${{ steps.gitversion.outputs.FullSemVer }}"
 
-            # Read original content
-            $content = Get-Content $projFile.FullName -Raw
+          # Replace '+' with '.' in version to make it safe for file naming
+          $safeVersion = $version -replace '\+', '.'
+          $versionTag = "<Version>$safeVersion</Version>"
 
-            if ($content -notmatch '<Version>.*?</Version>') {
-                # Insert <Version> before </PropertyGroup>
-                $content = $content -replace '</PropertyGroup>', "$versionTag`n</PropertyGroup>"
-            } else {
-                # Replace existing <Version>
-                $content = $content -replace '<Version>.*?</Version>', $versionTag
-            }
+          # Read original content
+          $content = Get-Content $projFile.FullName -Raw
 
-            # Write updated content back
-            Set-Content $projFile.FullName $content -Encoding UTF8
-
-            # Verify the updated version
-            Get-Content $projFile.FullName | Select-String "<Version>"
-
-
-      - name: Commit & Push .csproj version change (if any)
-        shell: pwsh
-        run: |
-          git config user.name "Subroto Saha"
-          git config user.email "isubrotosaha@gmail.com"
-
-          # Stage the .csproj file if modified
-          git add $env:project
-
-          # Check for staged changes
-          if (git diff --cached --quiet) {
-            Write-Host "🟢 No changes to commit. Version already up to date."
+          if ($content -notmatch '<Version>.*?</Version>') {
+              # Insert <Version> before </PropertyGroup>
+              $content = $content -replace '</PropertyGroup>', "$versionTag`n</PropertyGroup>"
           } else {
-            $version = "${{ steps.gitversion.outputs.FullSemVer }}"
-            $safeVersion = $version -replace '\+', '.'
-            git commit -m "🔖 Bump version to $safeVersion"
-            git push origin HEAD
-            Write-Host "✅ Committed and pushed updated .csproj version: $safeVersion"
+              # Replace existing <Version>
+              $content = $content -replace '<Version>.*?</Version>', $versionTag
           }
 
+          # Write updated content back
+          Set-Content $projFile.FullName $content -Encoding UTF8
+
+          # Verify the updated version
+          Get-Content $projFile.FullName | Select-String "<Version>"
 
       - name: Restore Dependencies
         run: dotnet restore ${{env.project}} -r win-x64
@@ -106,7 +84,7 @@ jobs:
         run: |
           echo "Adding WiX Toolset to PATH"
           $env:PATH = "$env:PATH;C:\Program Files\WiX Toolset v6.0\bin\x64"
-      
+
       - name: Generate Files.wxs excluding 'publish' folder
         run: |
           & "C:\Program Files\WiX Toolset v6.0\bin\x64\heat.exe" dir "bin\Release\net8.0-windows\win-x64" `
@@ -131,15 +109,14 @@ jobs:
         run: |
           # Get version from GitVersion
           $version = "${{ steps.gitversion.outputs.FullSemVer }}"
-          
+
           # Replace '+' with '.' in version to make it safe for file naming
           $safeVersion = $version -replace '\+', '.'
-          
+
           # Write to GitHub environment file (this is how you persist it)
           "SAFE_VERSION=$safeVersion" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           # Build the MSI using WiX Toolset (Ensure wix is in PATH or use full path)
           & "C:\Program Files\WiX Toolset v6.0\bin\wix.exe" build Product.wxs Files.wxs -arch x64 -define ProductVersion=$safeVersion -define SourceDir="..\bin\Release\net8.0-windows\win-x64" -out "../publish/Temp_Cleaner-$safeVersion.msi"
-
 
       - name: Upload Release Artifacts
         uses: softprops/action-gh-release@v2
@@ -149,6 +126,26 @@ jobs:
           files: |
             bin/Release/net8.0-windows/win-x64/publish/*.exe
             publish/**/Temp_Cleaner-${{ env.SAFE_VERSION }}.msi
+
+      - name: Commit & Push .csproj version change (if any)
+        shell: pwsh
+        run: |
+          git config user.name "Subroto Saha"
+          git config user.email "isubrotosaha@gmail.com"
+
+          # Stage the .csproj file if modified
+          git add $env:project
+
+          # Check for staged changes
+          if (git diff --cached --quiet) {
+            Write-Host "🟢 No changes to commit. Version already up to date."
+          } else {
+            $version = "${{ steps.gitversion.outputs.FullSemVer }}"
+            $safeVersion = $version -replace '\+', '.'
+            git commit -m "🔖 Bump version to $safeVersion"
+            git push origin HEAD
+            Write-Host "✅ Committed and pushed updated .csproj version: $safeVersion"
+          }
 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
