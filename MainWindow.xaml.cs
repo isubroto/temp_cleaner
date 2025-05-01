@@ -303,7 +303,9 @@ namespace TempCleaner
         private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
             await Task.Yield();
-            var version = await InitializeGitHubUpdaterAsync(LoadSettings().GitHub.Token); // Await the task to get the result
+            try
+            {
+                var version = await InitializeGitHubUpdaterAsync(LoadSettings().GitHub.Token); // Await the task to get the result
             var result = GitHubUpdater.CompareVersions(Assembly.GetExecutingAssembly().GetName().Version.ToString(), version.Version);
             if (result < 0)
             {
@@ -312,6 +314,11 @@ namespace TempCleaner
                 {
                     GitHubUpdater.OpenUrlInDefaultBrowser(version.Url);
                 }
+            }
+            }
+            catch 
+            {
+            
             }
 
 
