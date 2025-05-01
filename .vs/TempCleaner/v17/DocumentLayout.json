@@ -22,7 +22,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 2,
+          "SelectedChildIndex": 1,
           "Children": [
             {
               "$type": "Document",
@@ -40,6 +40,19 @@
             },
             {
               "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "GitHubUpdater.cs",
+              "DocumentMoniker": "D:\\Github\\temp_cleaner\\GitHubUpdater.cs",
+              "RelativeDocumentMoniker": "GitHubUpdater.cs",
+              "ToolTip": "D:\\Github\\temp_cleaner\\GitHubUpdater.cs",
+              "RelativeToolTip": "GitHubUpdater.cs",
+              "ViewState": "AgIAADMAAAAAAAAAAAAmwD4AAAAgAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-24T17:15:33.732Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
               "DocumentIndex": 2,
               "Title": "MainWindow.xaml.cs",
               "DocumentMoniker": "D:\\Github\\temp_cleaner\\MainWindow.xaml.cs",
@@ -49,19 +62,6 @@
               "ViewState": "AgIAACYBAAAAAAAAAAAuwDUBAAAbAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-04-24T17:15:56.927Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "GitHubUpdater.cs",
-              "DocumentMoniker": "D:\\Github\\temp_cleaner\\GitHubUpdater.cs",
-              "RelativeDocumentMoniker": "GitHubUpdater.cs",
-              "ToolTip": "D:\\Github\\temp_cleaner\\GitHubUpdater.cs*",
-              "RelativeToolTip": "GitHubUpdater.cs*",
-              "ViewState": "AgIAADMAAAAAAAAAAAAmwDwAAAAnAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-24T17:15:33.732Z",
-              "EditorCaption": ""
             }
           ]
         }
