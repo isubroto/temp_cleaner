@@ -58,9 +58,9 @@ namespace TempCleaner
                     }
                 }
             }
-            catch (HttpRequestException httpEx)
+            catch (HttpRequestException)
             {
-                MessageBox.Show($"HTTP Error: {httpEx.Message}");
+                MessageBox.Show("Update Check Error: Can Not Connect To Server");
             }
             catch (Exception ex)
             {
