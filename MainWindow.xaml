@@ -120,7 +120,7 @@
             </Grid>
             <StackPanel Grid.Row="1" Width="550">
                 <Image Source="pack://application:,,,/Images/Designer.png" Width="110" />
-                <TextBlock Text="Tepm Cleaner" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="35" Foreground="White" FontWeight="Bold" Margin="0 10 0 0"/>
+                <TextBlock Text="Temp Cleaner" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="35" Foreground="White" FontWeight="Bold" Margin="0 10 0 0"/>
                 <ProgressBar x:Name="Progress"
              Height="40"
              Margin="20 10"
