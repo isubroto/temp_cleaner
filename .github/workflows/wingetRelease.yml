@@ -1,0 +1,153 @@
+name: Submit to WinGet
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to submit to WinGet'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  submit-to-winget:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set version
+        id: version
+        run: |
+          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            $version = "${{ github.event.inputs.version }}"
+          } else {
+            $version = "${{ github.event.release.tag_name }}" -replace '^v', ''
+          }
+          echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+          echo "Using version: $version"
+
+      - name: Download and extract MSI
+        run: |
+          $version = "${{ steps.version.outputs.VERSION }}"
+          $msiUrl = "https://github.com/${{ github.repository }}/releases/download/v$version/Temp_Cleaner-$version.msi"
+          
+          Write-Host "Downloading MSI from: $msiUrl"
+          Invoke-WebRequest -Uri $msiUrl -OutFile "TempCleaner.msi"
+          
+          # Get file hash
+          $hash = (Get-FileHash -Path "TempCleaner.msi" -Algorithm SHA256).Hash
+          echo "MSI_HASH=$hash" >> $env:GITHUB_ENV
+          
+          # Extract Product Code from MSI
+          try {
+            $installer = New-Object -ComObject WindowsInstaller.Installer
+            $database = $installer.GetType().InvokeMember("OpenDatabase", "InvokeMethod", $null, $installer, @("TempCleaner.msi", 0))
+            $view = $database.GetType().InvokeMember("OpenView", "InvokeMethod", $null, $database, "SELECT Value FROM Property WHERE Property = 'ProductCode'")
+            $view.GetType().InvokeMember("Execute", "InvokeMethod", $null, $view, $null)
+            $record = $view.GetType().InvokeMember("Fetch", "InvokeMethod", $null, $view, $null)
+            $productCode = $record.GetType().InvokeMember("StringData", "GetProperty", $null, $record, 1)
+            echo "PRODUCT_CODE=$productCode" >> $env:GITHUB_ENV
+            Write-Host "Product Code: $productCode"
+          } catch {
+            Write-Host "Warning: Could not extract ProductCode from MSI. Using placeholder."
+            echo "PRODUCT_CODE={PLACEHOLDER-PRODUCT-GUID}" >> $env:GITHUB_ENV
+          }
+
+      - name: Create WinGet manifests
+        run: |
+          $version = "${{ steps.version.outputs.VERSION }}"
+          $repoUrl = "https://github.com/${{ github.repository }}"
+          $msiUrl = "$repoUrl/releases/download/v$version/Temp_Cleaner-$version.msi"
+          $hash = "${{ env.MSI_HASH }}"
+          $productCode = "${{ env.PRODUCT_CODE }}"
+          
+          # Create manifests directory
+          $manifestDir = "manifests/s/SubrotoSaha/TempCleaner/$version"
+          New-Item -ItemType Directory -Force -Path $manifestDir
+          
+          # Version manifest
+          $versionManifest = @"
+          PackageIdentifier: SubrotoSaha.TempCleaner
+          PackageVersion: $version
+          DefaultLocale: en-US
+          ManifestType: version
+          ManifestVersion: 1.6.0
+          "@
+          
+          # Locale manifest
+          $localeManifest = @"
+          PackageIdentifier: SubrotoSaha.TempCleaner
+          PackageVersion: $version
+          PackageLocale: en-US
+          Publisher: Subroto Saha
+          PublisherUrl: $repoUrl
+          PublisherSupportUrl: $repoUrl/issues
+          Author: Subroto Saha
+          PackageName: TempCleaner
+          PackageUrl: $repoUrl
+          License: MIT
+          LicenseUrl: $repoUrl/blob/main/LICENSE
+          Copyright: Copyright (c) 2025 Subroto Saha
+          ShortDescription: A powerful Windows temporary files cleaner
+          Description: TempCleaner is a professional Windows utility that helps you clean temporary files, system cache, and free up disk space. Features include safe cleaning algorithms, detailed scan reports, and scheduled cleaning options.
+          Moniker: tempcleaner
+          Tags:
+          - cleaner
+          - temp-files
+          - disk-cleanup
+          - system-utility
+          - windows
+          - maintenance
+          ReleaseNotes: Release notes for version $version
+          ReleaseNotesUrl: $repoUrl/releases/tag/v$version
+          ManifestType: defaultLocale
+          ManifestVersion: 1.6.0
+          "@
+          
+          # Installer manifest
+          $installerManifest = @"
+          PackageIdentifier: SubrotoSaha.TempCleaner
+          PackageVersion: $version
+          Platform:
+          - Windows.Desktop
+          MinimumOSVersion: 10.0.0.0
+          Scope: machine
+          InstallModes:
+          - interactive
+          - silent
+          - silentWithProgress
+          UpgradeBehavior: install
+          Installers:
+          - Architecture: x64
+            InstallerType: wix
+            InstallerUrl: $msiUrl
+            InstallerSha256: $hash
+            ProductCode: '$productCode'
+            Scope: machine
+            InstallerSwitches:
+              Silent: /quiet
+              SilentWithProgress: /passive
+          ManifestType: installer
+          ManifestVersion: 1.6.0
+          "@
+          
+          # Write manifests
+          $versionManifest | Out-File -FilePath "$manifestDir/SubrotoSaha.TempCleaner.yaml" -Encoding UTF8
+          $localeManifest | Out-File -FilePath "$manifestDir/SubrotoSaha.TempCleaner.locale.en-US.yaml" -Encoding UTF8
+          $installerManifest | Out-File -FilePath "$manifestDir/SubrotoSaha.TempCleaner.installer.yaml" -Encoding UTF8
+          
+          Write-Host "✅ WinGet manifests created in $manifestDir"
+
+      - name: Submit to WinGet Community Repository
+        uses: vedantmgoyal9/winget-releaser@main
+        with:
+          identifier: SubrotoSaha.TempCleaner
+          version: ${{ steps.version.outputs.VERSION }}
+          installers-regex: '\.msi$'
+          token: ${{ secrets.WINGET_TOKEN }}
+          fork-user: ${{ secrets.WINGET_FORK_USER }}
