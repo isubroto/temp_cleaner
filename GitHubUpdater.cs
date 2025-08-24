@@ -35,6 +35,12 @@ namespace TempCleaner
                         JsonElement root = document.RootElement;
                         if (root.TryGetProperty("tag_name", out var tagName))
                         {
+                            string? tagNameString = tagName.GetString();
+                            if (string.IsNullOrEmpty(tagNameString))
+                            {
+                                return null;
+                            }
+
                             string? msiUrl = null;
 
                             if (root.TryGetProperty("assets", out var assets) && assets.ValueKind == JsonValueKind.Array)
@@ -51,7 +57,7 @@ namespace TempCleaner
                                 }
                             }
 
-                            return new GetInformations(tagName.GetString()!, msiUrl);
+                            return new GetInformations(tagNameString, msiUrl);
                         }
 
                         return null;// Will only run if no exception occurred
@@ -73,39 +79,74 @@ namespace TempCleaner
 
         public static async Task DownloadUpdateAsync(string downloadUrl, string filePath)
         {
-            using var client = new HttpClient();
-            var content = await client.GetByteArrayAsync(downloadUrl);
-
-            await System.IO.File.WriteAllBytesAsync(filePath, content);
-
-            // Optionally, run the installer
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            try
             {
-                FileName = filePath,
-                UseShellExecute = true,
-            });
+                if (string.IsNullOrEmpty(downloadUrl))
+                {
+                    MessageBox.Show("Download URL is not available.");
+                    return;
+                }
+
+                using var client = new HttpClient();
+                var content = await client.GetByteArrayAsync(downloadUrl);
+
+                await System.IO.File.WriteAllBytesAsync(filePath, content);
+
+                // Optionally, run the installer
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = filePath,
+                    UseShellExecute = true,
+                });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to download update: {ex.Message}");
+            }
         }
         public static int CompareVersions(string currentVersion, string latestVersion)
         {
-            // Remove leading 'v' if present
-            currentVersion = currentVersion.TrimStart('v', 'V');
-            latestVersion = latestVersion.TrimStart('v', 'V');
-
-            var currentParts = currentVersion.Split('.').Select(int.Parse).ToList();
-            var latestParts = latestVersion.Split('.').Select(int.Parse).ToList();
-
-            // Pad the shorter version with zeros (e.g., 1.2 vs 1.2.0)
-            int maxLength = Math.Max(currentParts.Count, latestParts.Count);
-            while (currentParts.Count < maxLength) currentParts.Add(0);
-            while (latestParts.Count < maxLength) latestParts.Add(0);
-
-            for (int i = 0; i < maxLength; i++)
+            try
             {
-                if (currentParts[i] < latestParts[i]) return -1;
-                if (currentParts[i] > latestParts[i]) return 1;
-            }
+                // Handle null or empty versions
+                if (string.IsNullOrEmpty(currentVersion) || string.IsNullOrEmpty(latestVersion))
+                    return 0;
 
-            return 0; // equal
+                // Remove leading 'v' if present
+                currentVersion = currentVersion.TrimStart('v', 'V');
+                latestVersion = latestVersion.TrimStart('v', 'V');
+
+                var currentParts = currentVersion.Split('.').Select(part => 
+                {
+                    if (int.TryParse(part, out int result))
+                        return result;
+                    return 0; // Default to 0 for non-numeric parts
+                }).ToList();
+                
+                var latestParts = latestVersion.Split('.').Select(part => 
+                {
+                    if (int.TryParse(part, out int result))
+                        return result;
+                    return 0; // Default to 0 for non-numeric parts
+                }).ToList();
+
+                // Pad the shorter version with zeros (e.g., 1.2 vs 1.2.0)
+                int maxLength = Math.Max(currentParts.Count, latestParts.Count);
+                while (currentParts.Count < maxLength) currentParts.Add(0);
+                while (latestParts.Count < maxLength) latestParts.Add(0);
+
+                for (int i = 0; i < maxLength; i++)
+                {
+                    if (currentParts[i] < latestParts[i]) return -1;
+                    if (currentParts[i] > latestParts[i]) return 1;
+                }
+
+                return 0; // equal
+            }
+            catch (Exception)
+            {
+                return 0; // Default to equal if comparison fails
+            }
         }
         public static void OpenUrlInDefaultBrowser(string url)
         {

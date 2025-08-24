@@ -402,3 +402,6 @@ FodyWeavers.xsd
 *.v2
 
 !Deployment/**
+
+# Application settings with potential sensitive data
+# Note: appsettings.json should not contain real tokens in production

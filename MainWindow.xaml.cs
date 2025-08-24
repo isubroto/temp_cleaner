@@ -5,16 +5,6 @@ using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Input;
-// To fix the CS0246 error, you need to ensure that the Squirrel NuGet package is installed in your project.  
-// Follow these steps:  
-// 1. Open the NuGet Package Manager in Visual Studio.  
-// 2. Search for "Squirrel.Windows" and install it.  
-// 3. After installation, the error should be resolved.  
-
-// If the package is already installed but the error persists, ensure the project file includes the reference to Squirrel.Windows.  
-// You can also try cleaning and rebuilding the solution.  
-
-// No code changes are required in this file to fix the error.
 namespace TempCleaner
 {
     /// <summary>
@@ -41,9 +31,25 @@ namespace TempCleaner
         }
         public static AppSettings LoadSettings()
         {
-            var json = File.ReadAllText("./appsettings.json");
-            var settings = JsonSerializer.Deserialize<AppSettings>(json);
-            return settings;
+            try
+            {
+                if (!File.Exists("./appsettings.json"))
+                {
+                    // Return default settings if file doesn't exist
+                    return new AppSettings();
+                }
+
+                var json = File.ReadAllText("./appsettings.json");
+                var settings = JsonSerializer.Deserialize<AppSettings>(json);
+                
+                // Ensure we have a valid settings object
+                return settings ?? new AppSettings();
+            }
+            catch (Exception)
+            {
+                // Return default settings if loading fails
+                return new AppSettings();
+            }
         }
 
         [DllImport("Shell32.dll", SetLastError = true)]
@@ -305,23 +311,37 @@ namespace TempCleaner
             await Task.Yield();
             try
             {
-                var version = await InitializeGitHubUpdaterAsync(LoadSettings().GitHub.Token); // Await the task to get the result
-            var result = GitHubUpdater.CompareVersions(Assembly.GetExecutingAssembly().GetName().Version.ToString(), version.Version);
-            if (result < 0)
-            {
-                MessageBoxResult res = MessageBox.Show($@"An update is available!{Environment.NewLine}Current Version: {Assembly.GetExecutingAssembly().GetName().Version.ToString()}{Environment.NewLine}Latest Version: {version.Version}{Environment.NewLine}Do you want to download?", "Update !", MessageBoxButton.YesNo, MessageBoxImage.Question);
-                if (res == MessageBoxResult.Yes)
+                var settings = LoadSettings();
+                
+                // Check if we have a valid token before attempting update check
+                if (string.IsNullOrEmpty(settings.GitHub?.Token))
                 {
-                    GitHubUpdater.OpenUrlInDefaultBrowser(version.Url);
+                    // Skip update check if no token is available
+                    return;
                 }
-            }
+
+                var version = await InitializeGitHubUpdaterAsync(settings.GitHub.Token);
+                
+                // Check if version information was successfully retrieved
+                if (version != null && !string.IsNullOrEmpty(version.Version))
+                {
+                    var currentVersionString = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "0.0.0.0";
+                    var result = GitHubUpdater.CompareVersions(currentVersionString, version.Version);
+                    
+                    if (result < 0)
+                    {
+                        MessageBoxResult res = MessageBox.Show($@"An update is available!{Environment.NewLine}Current Version: {currentVersionString}{Environment.NewLine}Latest Version: {version.Version}{Environment.NewLine}Do you want to download?", "Update !", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                        if (res == MessageBoxResult.Yes && !string.IsNullOrEmpty(version.Url))
+                        {
+                            GitHubUpdater.OpenUrlInDefaultBrowser(version.Url);
+                        }
+                    }
+                }
             }
             catch 
             {
-            
+                // Silently handle update check failures
             }
-
-
         }
     }
 }
