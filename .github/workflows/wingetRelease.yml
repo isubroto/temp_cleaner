@@ -9,12 +9,181 @@ jobs:
     defaults:
       run:
         shell: pwsh
-        working-directory: ${{ github.workspace }}/packages/winget
     env:
       WINGETCREATE_TOKEN: ${{ secrets.WINGETCREATE_TOKEN }}
     steps:
-    - name: Checkout code 👋
-      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
-    - name: Create manifest and submit PR 📦
-      run: |
-        ./build.ps1 -Version "${{ github.event.release.tag_name }}" -Token $env:WINGETCREATE_TOKEN
+      - name: Checkout code 👋
+        uses: actions/checkout@v4
+
+      - name: Install WingetCreate 🛠️
+        run: |
+          Write-Host "Installing WingetCreate..."
+          Invoke-WebRequest -Uri "https://aka.ms/wingetcreate/latest" -OutFile "wingetcreate.exe"
+          .\wingetcreate.exe --version
+
+      - name: Extract version from release 🏷️
+        id: version
+        run: |
+          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            $version = "${{ github.event.inputs.version }}"
+            Write-Host "Manual trigger - using input version: $version"
+          } else {
+            # Automatically get version from the published release
+            $version = "${{ github.event.release.tag_name }}"
+            Write-Host "Automatic trigger - using release tag: $version"
+          }
+          
+          # Remove 'v' prefix if present for clean version
+          $cleanVersion = $version -replace '^v', ''
+          
+          # Validate version format
+          if ($cleanVersion -notmatch '^\d+\.\d+\.\d+(\.\d+)?$') {
+            Write-Error "Invalid version format: $cleanVersion. Expected format: X.Y.Z or X.Y.Z.W"
+            exit 1
+          }
+          
+          echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+          echo "CLEAN_VERSION=$cleanVersion" >> $env:GITHUB_OUTPUT
+          Write-Host "✅ Tag version: $version"
+          Write-Host "✅ Clean version: $cleanVersion"
+
+      - name: Validate release assets 📋
+        run: |
+          $version = "${{ steps.version.outputs.VERSION }}"
+          $cleanVersion = "${{ steps.version.outputs.CLEAN_VERSION }}"
+          $msiUrl = "https://github.com/${{ github.repository }}/releases/download/$version/Temp_Cleaner-$cleanVersion.msi"
+          
+          Write-Host "🔍 Checking MSI availability at: $msiUrl"
+          
+          # Wait a bit for the release assets to be available
+          Start-Sleep -Seconds 10
+          
+          $maxRetries = 5
+          $retryCount = 0
+          $found = $false
+          
+          while ($retryCount -lt $maxRetries -and -not $found) {
+            try {
+              $response = Invoke-WebRequest -Uri $msiUrl -Method Head -ErrorAction Stop
+              Write-Host "✅ MSI found (Status: $($response.StatusCode))"
+              $found = $true
+            } catch {
+              $retryCount++
+              Write-Host "⏳ Attempt $retryCount/$maxRetries - MSI not yet available, waiting 30 seconds..."
+              Start-Sleep -Seconds 30
+            }
+          }
+          
+          if (-not $found) {
+            Write-Error "❌ MSI not found after $maxRetries attempts."
+            Write-Error "Expected URL: $msiUrl"
+            Write-Error "Please ensure your release workflow has completed and the MSI file is attached."
+            exit 1
+          }
+
+      - name: Create or update WinGet package 📦
+        run: |
+          $version = "${{ steps.version.outputs.VERSION }}"
+          $cleanVersion = "${{ steps.version.outputs.CLEAN_VERSION }}"
+          $msiUrl = "https://github.com/${{ github.repository }}/releases/download/$version/Temp_Cleaner-$cleanVersion.msi"
+          
+          Write-Host "📦 Creating WinGet package for version: $cleanVersion"
+          Write-Host "🔗 MSI URL: $msiUrl"
+          
+          # Check if this is a new package or update
+          $packageExists = $false
+          try {
+            $showResult = .\wingetcreate.exe show --id SubrotoSaha.TempCleaner --exact 2>&1
+            if ($LASTEXITCODE -eq 0) {
+              $packageExists = $true
+              Write-Host "📦 Package exists - creating update"
+            }
+          } catch {
+            Write-Host "🆕 New package - creating initial submission"
+          }
+          
+          if ($packageExists) {
+            Write-Host "🔄 Updating existing package..."
+            # Update existing package
+            .\wingetcreate.exe update SubrotoSaha.TempCleaner `
+              --version $cleanVersion `
+              --urls $msiUrl `
+              --token $env:WINGETCREATE_TOKEN `
+              --submit
+          } else {
+            Write-Host "🆕 Creating new package..."
+            # Create new package
+            .\wingetcreate.exe new `
+              --id SubrotoSaha.TempCleaner `
+              --name "TempCleaner" `
+              --version $cleanVersion `
+              --publisher "Subroto Saha" `
+              --description "A powerful Windows temporary files cleaner that helps you clean temporary files, system cache, and free up disk space with safe cleaning algorithms and detailed reports." `
+              --homepage "https://github.com/${{ github.repository }}" `
+              --license "MIT" `
+              --license-url "https://github.com/${{ github.repository }}/blob/main/LICENSE" `
+              --installer-url $msiUrl `
+              --installer-type msi `
+              --installer-scope machine `
+              --installer-architecture x64 `
+              --moniker tempcleaner `
+              --tags "cleaner,temp-files,disk-cleanup,system-utility,windows,maintenance,optimization" `
+              --token $env:WINGETCREATE_TOKEN `
+              --submit
+          }
+          
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "✅ WinGet submission successful!"
+          } else {
+            Write-Error "❌ WinGet submission failed with exit code $LASTEXITCODE"
+            exit 1
+          }
+
+      - name: Verify submission 🔍
+        run: |
+          Write-Host ""
+          Write-Host "🎉 WinGet submission completed successfully!"
+          Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          Write-Host "📦 Package ID: SubrotoSaha.TempCleaner"
+          Write-Host "🏷️ Version: ${{ steps.version.outputs.CLEAN_VERSION }}"
+          Write-Host "🔗 Release: https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.VERSION }}"
+          Write-Host "🌐 MSI URL: https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.VERSION }}/Temp_Cleaner-${{ steps.version.outputs.CLEAN_VERSION }}.msi"
+          Write-Host ""
+          Write-Host "📝 Next steps:"
+          Write-Host "   1. Check the automatically created PR in microsoft/winget-pkgs"
+          Write-Host "   2. Monitor for any feedback from WinGet maintainers"
+          Write-Host "   3. Once merged, users can install with: winget install SubrotoSaha.TempCleaner"
+          Write-Host ""
+          Write-Host "📊 View PRs: https://github.com/microsoft/winget-pkgs/pulls?q=is%3Apr+SubrotoSaha.TempCleaner"
+
+      - name: Create summary 📊
+        run: |
+          $version = "${{ steps.version.outputs.CLEAN_VERSION }}"
+          $tagVersion = "${{ steps.version.outputs.VERSION }}"
+          $summary = @"
+          ## 🎉 WinGet Submission Completed Successfully
+          
+          **Package:** SubrotoSaha.TempCleaner  
+          **Version:** $version  
+          **Release Tag:** $tagVersion  
+          **Status:** ✅ Submitted to WinGet Community Repository
+          
+          ### 📝 What happens next?
+          1. A Pull Request has been automatically created in [microsoft/winget-pkgs](https://github.com/microsoft/winget-pkgs)
+          2. Microsoft's automated validation will run
+          3. If validation passes, the package will be available via WinGet
+          4. Users will be able to install with: ``winget install SubrotoSaha.TempCleaner``
+          
+          ### 🔗 Links
+          - [Release](https://github.com/${{ github.repository }}/releases/tag/$tagVersion)
+          - [MSI Download](https://github.com/${{ github.repository }}/releases/download/$tagVersion/Temp_Cleaner-$version.msi)
+          - [WinGet PRs](https://github.com/microsoft/winget-pkgs/pulls?q=is%3Apr+SubrotoSaha.TempCleaner)
+          
+          ### 🚀 Installation Command
+          Once approved:
+          ````
+          winget install SubrotoSaha.TempCleaner
+          ````
+          "@
+          
+          echo $summary >> $env:GITHUB_STEP_SUMMARY
