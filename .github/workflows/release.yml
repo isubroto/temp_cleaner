@@ -121,11 +121,59 @@ jobs:
       - name: Upload Release Artifacts
         uses: softprops/action-gh-release@v2
         with:
-          name: Release v${{ env.SAFE_VERSION }}
+          name: "TempCleaner v${{ env.SAFE_VERSION }}"
           tag_name: v${{ env.SAFE_VERSION }}
+          body: |
+            ## 🧹 TempCleaner v${{ env.SAFE_VERSION }}
+            
+            ### 📦 What's Included
+            - **Portable Executable**: Ready-to-run single-file application
+            - **MSI Installer**: Professional Windows installer package
+            
+            ### 🚀 Installation Options
+            
+            #### Option 1: MSI Installer (Recommended)
+            1. Download `Temp_Cleaner-${{ env.SAFE_VERSION }}.msi`
+            2. Run the installer as Administrator
+            3. Follow the installation wizard
+            4. Launch from Start Menu or Desktop shortcut
+            
+            #### Option 2: Portable Version
+            1. Download the `.exe` file
+            2. Run directly - no installation required
+            3. Perfect for USB drives or temporary usage
+            
+            ### 📋 System Requirements
+            - Windows 10/11 (x64)
+            - .NET 8.0 Runtime (included in self-contained builds)
+            - Administrator privileges (recommended for full functionality)
+            
+            ### 🔧 Technical Details
+            - **Architecture**: x64
+            - **Framework**: .NET 8.0
+            - **Package Type**: Self-contained, single-file deployment
+            - **Build Configuration**: Release
+            
+            ### 📝 Release Notes
+            This release includes improvements and bug fixes. For detailed changelog, please check the commit history.
+            
+            ### 🐛 Known Issues
+            - Please report any issues in the [Issues](https://github.com/${{ github.repository }}/issues) section
+            
+            ### 💡 Support
+            If you encounter any problems, please:
+            1. Check the [documentation](https://github.com/${{ github.repository }}/wiki)
+            2. Search existing [issues](https://github.com/${{ github.repository }}/issues)
+            3. Create a new issue if needed
+            
+            ---
+            **Full Changelog**: https://github.com/${{ github.repository }}/compare/v${{ steps.gitversion.outputs.PreviousVersion }}...v${{ env.SAFE_VERSION }}
           files: |
             bin/Release/net8.0-windows/win-x64/publish/*.exe
             publish/**/Temp_Cleaner-${{ env.SAFE_VERSION }}.msi
+          draft: false
+          prerelease: ${{ contains(steps.gitversion.outputs.FullSemVer, '-') }}
+          generate_release_notes: true
 
       - name: Commit & Push .csproj version change (if any)
         shell: pwsh
@@ -146,6 +194,103 @@ jobs:
             git push origin HEAD
             Write-Host "✅ Committed and pushed updated .csproj version: $safeVersion"
           }
+      - name: Create WinGet Manifest
+        shell: pwsh
+        run: |
+          $version = "${{ env.SAFE_VERSION }}"
+          $repoUrl = "https://github.com/${{ github.repository }}"
+          $msiUrl = "$repoUrl/releases/download/v$version/Temp_Cleaner-$version.msi"
+          
+          # Create winget directory
+          New-Item -ItemType Directory -Force -Path "winget"
+          
+          # Get MSI file hash
+          $msiPath = "publish/Temp_Cleaner-$version.msi"
+          $hash = (Get-FileHash -Path $msiPath -Algorithm SHA256).Hash
+          
+          Write-Host "MSI Hash: $hash"
+          Write-Host "MSI URL: $msiUrl"
+          
+          # Create version manifest
+          $versionManifest = @"
+          PackageIdentifier: SubrotoSaha.TempCleaner
+          PackageVersion: $version
+          DefaultLocale: en-US
+          ManifestType: version
+          ManifestVersion: 1.6.0
+          "@
+          
+          # Create default locale manifest
+          $localeManifest = @"
+          PackageIdentifier: SubrotoSaha.TempCleaner
+          PackageVersion: $version
+          PackageLocale: en-US
+          Publisher: Subroto Saha
+          PublisherUrl: $repoUrl
+          PublisherSupportUrl: $repoUrl/issues
+          Author: Subroto Saha
+          PackageName: TempCleaner
+          PackageUrl: $repoUrl
+          License: MIT
+          LicenseUrl: $repoUrl/blob/main/LICENSE
+          Copyright: Copyright (c) 2025 Subroto Saha
+          ShortDescription: A powerful Windows temporary files cleaner
+          Description: TempCleaner is a professional Windows utility that helps you clean temporary files, system cache, and free up disk space. Features include safe cleaning algorithms, detailed scan reports, and scheduled cleaning options.
+          Moniker: tempcleaner
+          Tags:
+          - cleaner
+          - temp-files
+          - disk-cleanup
+          - system-utility
+          - windows
+          - maintenance
+          ReleaseNotes: |
+            This release includes improvements and bug fixes.
+            For detailed changelog, visit: $repoUrl/releases/tag/v$version
+          ReleaseNotesUrl: $repoUrl/releases/tag/v$version
+          ManifestType: defaultLocale
+          ManifestVersion: 1.6.0
+          "@
+          
+          # Create installer manifest (we'll get ProductCode later)
+          $installerManifest = @"
+          PackageIdentifier: SubrotoSaha.TempCleaner
+          PackageVersion: $version
+          Platform:
+          - Windows.Desktop
+          MinimumOSVersion: 10.0.0.0
+          Scope: machine
+          InstallModes:
+          - interactive
+          - silent
+          - silentWithProgress
+          UpgradeBehavior: install
+          Installers:
+          - Architecture: x64
+            InstallerType: wix
+            InstallerUrl: $msiUrl
+            InstallerSha256: $hash
+            ProductCode: '{PLACEHOLDER-PRODUCT-GUID}'
+            Scope: machine
+            InstallerSwitches:
+              Silent: /quiet
+              SilentWithProgress: /passive
+          ManifestType: installer
+          ManifestVersion: 1.6.0
+          "@
+          
+          # Write manifests to files
+          $versionManifest | Out-File -FilePath "winget/SubrotoSaha.TempCleaner.yaml" -Encoding UTF8
+          $localeManifest | Out-File -FilePath "winget/SubrotoSaha.TempCleaner.locale.en-US.yaml" -Encoding UTF8
+          $installerManifest | Out-File -FilePath "winget/SubrotoSaha.TempCleaner.installer.yaml" -Encoding UTF8
+          
+          Write-Host "✅ WinGet manifests created successfully"
+
+      - name: Upload WinGet Manifests as Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: winget-manifests-v${{ env.SAFE_VERSION }}
+          path: winget/
 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
