@@ -135,7 +135,7 @@ TempCleaner intelligently scans the following locations:
 | **Architecture**     | x64 (64-bit)                     |
 | **Runtime**          | .NET 8.0 (self-contained)        |
 | **Memory**           | 512 MB RAM minimum               |
-| **Storage**          | 50 MB available space            |
+| **Storage**          | 150 MB available space            |
 | **Privileges**       | Administrator recommended        |
 
 ## 🛠️ Development
