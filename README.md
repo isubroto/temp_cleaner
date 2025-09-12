@@ -65,22 +65,23 @@
 
 ## 🚀 Quick Start
 
-### Installation Options
 
+<!-- 
+### Installation Options
 #### Option 1: WinGet (Recommended)
 
 ```powershell
 winget install SubrotoSaha.TempCleaner
-```
+``` -->
 
-#### Option 2: MSI Installer
+#### Option 1: MSI Installer
 
 1. Download the latest `.msi` installer from [Releases](https://github.com/isubroto/temp_cleaner/releases/latest)
 2. Run as Administrator
 3. Follow the installation wizard
 4. Launch from Start Menu or Desktop shortcut
 
-#### Option 3: Portable Version
+#### Option 2: Portable Version
 
 1. Download the `.exe` file from [Releases](https://github.com/isubroto/temp_cleaner/releases/latest)
 2. Run directly - no installation required
