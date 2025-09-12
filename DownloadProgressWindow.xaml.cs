@@ -17,6 +17,10 @@ namespace TempCleaner
         private HttpClient? _httpClient;
         private CancellationTokenSource? _cancellationTokenSource;
         private bool _downloadCompleted = false;
+        
+        // Speed calculation variables
+        private DateTime _downloadStartTime;
+        private long _totalBytesDownloaded = 0;
 
         public DownloadProgressWindow(string downloadUrl, string fileName, string? githubToken = null)
         {
@@ -88,12 +92,15 @@ namespace TempCleaner
                 
                 StatusText.Text = "📥 Downloading update";
                 
+                // Initialize download timing
+                _downloadStartTime = DateTime.Now;
+                _totalBytesDownloaded = 0;
+                
                 using var stream = await response.Content.ReadAsStreamAsync(_cancellationTokenSource.Token);
                 using var fileStream = new FileStream(_downloadPath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true);
                 
                 var buffer = new byte[8192];
-                long totalDownloaded = 0;
-                var stopwatch = Stopwatch.StartNew();
+                DateTime lastUpdateTime = DateTime.Now;
                 
                 while (true)
                 {
@@ -101,21 +108,23 @@ namespace TempCleaner
                     if (bytesRead == 0) break;
                     
                     await fileStream.WriteAsync(buffer, 0, bytesRead, _cancellationTokenSource.Token);
-                    totalDownloaded += bytesRead;
+                    _totalBytesDownloaded += bytesRead;
                     
-                    // Update UI every 100KB or every 100ms
-                    if (totalDownloaded % (100 * 1024) == 0 || stopwatch.ElapsedMilliseconds > 100)
+                    // Update UI every 100KB or every 250ms for smoother updates
+                    var currentTime = DateTime.Now;
+                    if (_totalBytesDownloaded % (100 * 1024) == 0 || 
+                        (currentTime - lastUpdateTime).TotalMilliseconds > 250)
                     {
-                        UpdateProgress(totalDownloaded, totalBytes, stopwatch.Elapsed);
-                        stopwatch.Restart();
+                        UpdateProgress(_totalBytesDownloaded, totalBytes);
+                        lastUpdateTime = currentTime;
                     }
                 }
                 
                 // Final update
-                UpdateProgress(totalDownloaded, totalBytes, TimeSpan.Zero);
+                UpdateProgress(_totalBytesDownloaded, totalBytes);
                 
                 _downloadCompleted = true;
-                StatusText.Text = "✅ Private repository download completed! Ready to install.";
+                StatusText.Text = "✅ Download completed! Ready to install.";
                 CancelButton.Content = "🚪 Close";
                 InstallButton.Visibility = Visibility.Visible;
             }
@@ -156,7 +165,7 @@ namespace TempCleaner
             }
         }
 
-        private void UpdateProgress(long downloaded, long total, TimeSpan elapsed)
+        private void UpdateProgress(long downloaded, long total)
         {
             Dispatcher.Invoke(() =>
             {
@@ -178,13 +187,47 @@ namespace TempCleaner
                 
                 DownloadedText.Text = FormatFileSize(downloaded);
                 
-                // Calculate speed
-                if (elapsed.TotalSeconds > 0)
+                // Calculate speed based on total elapsed time
+                var totalElapsed = DateTime.Now - _downloadStartTime;
+                if (totalElapsed.TotalSeconds > 0.5) // Only calculate after 500ms to avoid initial spikes
                 {
-                    var speed = downloaded / elapsed.TotalSeconds;
-                    SpeedText.Text = FormatFileSize((long)speed) + "/s";
+                    var bytesPerSecond = downloaded / totalElapsed.TotalSeconds;
+                    
+                    // Debug information
+                    System.Diagnostics.Debug.WriteLine($"Downloaded: {downloaded} bytes");
+                    System.Diagnostics.Debug.WriteLine($"Elapsed: {totalElapsed.TotalSeconds:F2} seconds");
+                    System.Diagnostics.Debug.WriteLine($"Bytes per second: {bytesPerSecond:F2}");
+                    System.Diagnostics.Debug.WriteLine($"Formatted speed: {FormatSpeed(bytesPerSecond)}");
+                    
+                    SpeedText.Text = FormatSpeed(bytesPerSecond);
+                }
+                else
+                {
+                    SpeedText.Text = "-- B/s";
                 }
             });
+        }
+
+        private string FormatSpeed(double bytesPerSecond)
+        {
+            if (bytesPerSecond == 0) return "0 B/s";
+            
+            string[] sizes = { "B/s", "KB/s", "MB/s", "GB/s", "TB/s" };
+            double speed = bytesPerSecond;
+            int order = 0;
+            
+            System.Diagnostics.Debug.WriteLine($"FormatSpeed input: {bytesPerSecond:F2} bytes/second");
+            
+            while (speed >= 1024 && order < sizes.Length - 1)
+            {
+                order++;
+                speed = speed / 1024;
+                System.Diagnostics.Debug.WriteLine($"Converted to order {order}: {speed:F2} {sizes[order]}");
+            }
+
+            var result = $"{speed:0.##} {sizes[order]}";
+            System.Diagnostics.Debug.WriteLine($"Final result: {result}");
+            return result;
         }
 
         private string FormatFileSize(long bytes)
@@ -221,34 +264,174 @@ namespace TempCleaner
             }
         }
 
-        private async void InstallButton_Click(object sender, RoutedEventArgs e)
+        private void InstallButton_Click(object sender, RoutedEventArgs e)
         {
             try
             {
+                StatusText.Text = "🚀 Launching installer...";
+                
+                // Debug: Show the actual file path and verify file exists
+                System.Diagnostics.Debug.WriteLine($"Installing MSI from: {_downloadPath}");
+                System.Diagnostics.Debug.WriteLine($"File exists: {File.Exists(_downloadPath)}");
+                
                 if (File.Exists(_downloadPath))
                 {
-                    StatusText.Text = "🚀 Launching installer...";
+                    var fileInfo = new FileInfo(_downloadPath);
+                    System.Diagnostics.Debug.WriteLine($"File size: {fileInfo.Length} bytes");
+                    System.Diagnostics.Debug.WriteLine($"File name: {fileInfo.Name}");
                     
-                    var startInfo = new ProcessStartInfo
+                    bool installationStarted = false;
+                    
+                    // Method 1: Use msiexec.exe to properly install MSI files
+                    if (!installationStarted)
                     {
-                        FileName = _downloadPath,
-                        UseShellExecute = true,
-                        Verb = "runas" // Request admin privileges
-                    };
+                        try
+                        {
+                            var msiExecStartInfo = new ProcessStartInfo
+                            {
+                                FileName = "msiexec.exe",
+                                Arguments = $"/i \"{_downloadPath}\"", // Interactive installation
+                                UseShellExecute = true,
+                                Verb = "runas" // Request admin privileges
+                            };
+                            
+                            System.Diagnostics.Debug.WriteLine($"Trying msiexec with: {msiExecStartInfo.Arguments}");
+                            Process.Start(msiExecStartInfo);
+                            installationStarted = true;
+                            
+                            // Close the application after starting installer
+                            Task.Delay(2000).ContinueWith(_ => 
+                            {
+                                Dispatcher.Invoke(() => Application.Current.Shutdown());
+                            });
+                        }
+                        catch (Exception msiExecEx)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"msiexec method failed: {msiExecEx.Message}");
+                        }
+                    }
                     
-                    Process.Start(startInfo);
+                    // Method 2: Try direct file execution with shell
+                    if (!installationStarted)
+                    {
+                        try
+                        {
+                            var directStartInfo = new ProcessStartInfo
+                            {
+                                FileName = _downloadPath,
+                                UseShellExecute = true,
+                                Verb = "runas"
+                            };
+                            
+                            System.Diagnostics.Debug.WriteLine("Trying direct execution");
+                            Process.Start(directStartInfo);
+                            installationStarted = true;
+                            
+                            Task.Delay(2000).ContinueWith(_ => 
+                            {
+                                Dispatcher.Invoke(() => Application.Current.Shutdown());
+                            });
+                        }
+                        catch (Exception directEx)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Direct execution failed: {directEx.Message}");
+                        }
+                    }
                     
-                    // Close the application to allow update
-                    Application.Current.Shutdown();
+                    // Method 3: Try using PowerShell to start the MSI
+                    if (!installationStarted)
+                    {
+                        try
+                        {
+                            var powershellStartInfo = new ProcessStartInfo
+                            {
+                                FileName = "powershell.exe",
+                                Arguments = $"-Command \"Start-Process -FilePath '{_downloadPath}' -Verb RunAs\"",
+                                UseShellExecute = true,
+                                WindowStyle = ProcessWindowStyle.Hidden
+                            };
+                            
+                            System.Diagnostics.Debug.WriteLine("Trying PowerShell execution");
+                            Process.Start(powershellStartInfo);
+                            installationStarted = true;
+                            
+                            Task.Delay(2000).ContinueWith(_ => 
+                            {
+                                Dispatcher.Invoke(() => Application.Current.Shutdown());
+                            });
+                        }
+                        catch (Exception powershellEx)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"PowerShell method failed: {powershellEx.Message}");
+                        }
+                    }
+                    
+                    // Method 4: Try using cmd to execute the MSI
+                    if (!installationStarted)
+                    {
+                        try
+                        {
+                            var cmdStartInfo = new ProcessStartInfo
+                            {
+                                FileName = "cmd.exe",
+                                Arguments = $"/c start \"\" \"{_downloadPath}\"",
+                                UseShellExecute = true,
+                                WindowStyle = ProcessWindowStyle.Hidden,
+                                Verb = "runas"
+                            };
+                            
+                            System.Diagnostics.Debug.WriteLine("Trying CMD execution");
+                            Process.Start(cmdStartInfo);
+                            installationStarted = true;
+                            
+                            Task.Delay(2000).ContinueWith(_ => 
+                            {
+                                Dispatcher.Invoke(() => Application.Current.Shutdown());
+                            });
+                        }
+                        catch (Exception cmdEx)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"CMD method failed: {cmdEx.Message}");
+                        }
+                    }
+                    
+                    // Method 5: Manual installation guidance
+                    if (!installationStarted)
+                    {
+                        try
+                        {
+                            var explorerStartInfo = new ProcessStartInfo
+                            {
+                                FileName = "explorer.exe",
+                                Arguments = $"/select,\"{_downloadPath}\"",
+                                UseShellExecute = false
+                            };
+                            
+                            Process.Start(explorerStartInfo);
+                            
+                            MessageBox.Show($"🌊 Automatic installation failed. The installer has been located for you.\n\n📁 File: {Path.GetFileName(_downloadPath)}\n📍 Location: {Path.GetDirectoryName(_downloadPath)}\n\n🚀 Please double-click the highlighted MSI file to install.\n\nNote: You may need to right-click and select \"Run as administrator\"", 
+                                "Manual Installation Required", MessageBoxButton.OK, MessageBoxImage.Information);
+                        }
+                        catch (Exception explorerEx)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Explorer method failed: {explorerEx.Message}");
+                            
+                            // Final fallback: Just show the path
+                            MessageBox.Show($"🌊 Please install manually.\n\n📁 Downloaded file: {_downloadPath}\n\n🚀 Navigate to this location and double-click the MSI file to install.\n\nNote: You may need to right-click and select \"Run as administrator\"", 
+                                "Manual Installation Required", MessageBoxButton.OK, MessageBoxImage.Information);
+                        }
+                    }
                 }
                 else
                 {
-                    MessageBox.Show("Downloaded file not found!", "Installation Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show($"🌊 Downloaded file not found!\n\n📍 Expected location: {_downloadPath}\n\nPlease check if the download completed successfully.", "Installation Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to start installer: {ex.Message}", "Installation Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                System.Diagnostics.Debug.WriteLine($"Install button error: {ex.Message}");
+                MessageBox.Show($"🌊 Installation Error\n\n{ex.Message}\n\n📁 File location: {_downloadPath}\n\n🚀 Please try running the installer manually.", 
+                    "Installation Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

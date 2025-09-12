@@ -135,19 +135,7 @@ namespace TempCleaner
                 @"C:\Windows\SoftwareDistribution\DataStore",
                 @"C:\ProgramData\Microsoft\Windows\WER\ReportQueue",
                 @"C:\ProgramData\Microsoft\Windows\WER\ReportArchive",
-                
-                // Thumbnails and Icon Cache  
-                $@"C:\Users\{name[1]}\AppData\Local\Microsoft\Windows\Explorer\thumbcache_32.db",
-                $@"C:\Users\{name[1]}\AppData\Local\Microsoft\Windows\Explorer\thumbcache_96.db",
-                $@"C:\Users\{name[1]}\AppData\Local\Microsoft\Windows\Explorer\thumbcache_256.db",
-                $@"C:\Users\{name[1]}\AppData\Local\Microsoft\Windows\Explorer\thumbcache_1024.db",
-                $@"C:\Users\{name[1]}\AppData\Local\IconCache.db",
-                
-                // Browser Cache (Chrome, Edge, Firefox)
-                $@"C:\Users\{name[1]}\AppData\Local\Google\Chrome\User Data\Default\Cache",
-                $@"C:\Users\{name[1]}\AppData\Local\Microsoft\Edge\User Data\Default\Cache",
-                $@"C:\Users\{name[1]}\AppData\Local\Mozilla\Firefox\Profiles",
-                
+               
                 // Recent Files and Jump Lists
                 $@"C:\Users\{name[1]}\AppData\Roaming\Microsoft\Windows\Recent",
                 $@"C:\Users\{name[1]}\AppData\Roaming\Microsoft\Windows\Recent\AutomaticDestinations",

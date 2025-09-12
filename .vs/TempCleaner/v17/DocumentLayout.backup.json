@@ -3,12 +3,16 @@
   "WorkspaceRootPath": "D:\\Github\\temp_cleaner\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{4C7558EB-4379-4559-9A79-0BE7BAD7E07F}|TempCleaner.csproj|d:\\github\\temp_cleaner\\mainwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{4C7558EB-4379-4559-9A79-0BE7BAD7E07F}|TempCleaner.csproj|solutionrelative:mainwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{4C7558EB-4379-4559-9A79-0BE7BAD7E07F}|TempCleaner.csproj|d:\\github\\temp_cleaner\\downloadprogresswindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{4C7558EB-4379-4559-9A79-0BE7BAD7E07F}|TempCleaner.csproj|solutionrelative:downloadprogresswindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{4C7558EB-4379-4559-9A79-0BE7BAD7E07F}|TempCleaner.csproj|d:\\github\\temp_cleaner\\downloadprogresswindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
       "RelativeMoniker": "D:0:0:{4C7558EB-4379-4559-9A79-0BE7BAD7E07F}|TempCleaner.csproj|solutionrelative:downloadprogresswindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4C7558EB-4379-4559-9A79-0BE7BAD7E07F}|TempCleaner.csproj|d:\\github\\temp_cleaner\\mainwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{4C7558EB-4379-4559-9A79-0BE7BAD7E07F}|TempCleaner.csproj|solutionrelative:mainwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{4C7558EB-4379-4559-9A79-0BE7BAD7E07F}|TempCleaner.csproj|d:\\github\\temp_cleaner\\githubupdater.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -23,10 +27,6 @@
       "RelativeMoniker": "D:0:0:{4C7558EB-4379-4559-9A79-0BE7BAD7E07F}|TempCleaner.csproj|solutionrelative:custom.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{4C7558EB-4379-4559-9A79-0BE7BAD7E07F}|TempCleaner.csproj|d:\\github\\temp_cleaner\\downloadprogresswindow.xaml||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
-      "RelativeMoniker": "D:0:0:{4C7558EB-4379-4559-9A79-0BE7BAD7E07F}|TempCleaner.csproj|solutionrelative:downloadprogresswindow.xaml||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{4C7558EB-4379-4559-9A79-0BE7BAD7E07F}|TempCleaner.csproj|d:\\github\\temp_cleaner\\mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
       "RelativeMoniker": "D:0:0:{4C7558EB-4379-4559-9A79-0BE7BAD7E07F}|TempCleaner.csproj|solutionrelative:mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
     }
@@ -38,11 +38,11 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 3,
+          "SelectedChildIndex": 1,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 4,
               "Title": "TempCleaner.csproj",
               "DocumentMoniker": "D:\\Github\\temp_cleaner\\TempCleaner.csproj",
               "RelativeDocumentMoniker": "TempCleaner.csproj",
@@ -51,16 +51,24 @@
               "ViewState": "AgIAAAYAAAAAAAAAAAAAAA4AAAASAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
               "WhenOpened": "2025-04-24T17:15:18.407Z",
-              "IsPinned": true,
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Bookmark",
-              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
+              "IsPinned": true
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 0,
+              "Title": "DownloadProgressWindow.xaml.cs",
+              "DocumentMoniker": "D:\\Github\\temp_cleaner\\DownloadProgressWindow.xaml.cs",
+              "RelativeDocumentMoniker": "DownloadProgressWindow.xaml.cs",
+              "ToolTip": "D:\\Github\\temp_cleaner\\DownloadProgressWindow.xaml.cs",
+              "RelativeToolTip": "DownloadProgressWindow.xaml.cs",
+              "ViewState": "AgIAAK4BAAAAAAAAAAD4v8gBAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-12T09:55:52.645Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
               "Title": "Custom.cs",
               "DocumentMoniker": "D:\\Github\\temp_cleaner\\Custom.cs",
               "RelativeDocumentMoniker": "Custom.cs",
@@ -68,18 +76,17 @@
               "RelativeToolTip": "Custom.cs",
               "ViewState": "AgIAAAQAAAAAAAAAAAAzwBYAAAAdAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-11T23:56:57.05Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-09-11T23:56:57.05Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 2,
               "Title": "MainWindow.xaml.cs",
               "DocumentMoniker": "D:\\Github\\temp_cleaner\\MainWindow.xaml.cs",
               "RelativeDocumentMoniker": "MainWindow.xaml.cs",
               "ToolTip": "D:\\Github\\temp_cleaner\\MainWindow.xaml.cs",
               "RelativeToolTip": "MainWindow.xaml.cs",
-              "ViewState": "AgIAAF0CAAAAAAAAAIA9wGACAAAvAAAAAAAAAA==",
+              "ViewState": "AgIAAIQAAAAAAAAAAADgv5kAAAAmAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-09-11T21:14:18.118Z",
               "EditorCaption": ""
@@ -98,7 +105,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 3,
               "Title": "GitHubUpdater.cs",
               "DocumentMoniker": "D:\\Github\\temp_cleaner\\GitHubUpdater.cs",
               "RelativeDocumentMoniker": "GitHubUpdater.cs",
@@ -106,21 +113,7 @@
               "RelativeToolTip": "GitHubUpdater.cs",
               "ViewState": "AgIAAJsAAAAAAAAAAAAhwHQAAAAkAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-24T17:15:33.732Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "DownloadProgressWindow.xaml",
-              "DocumentMoniker": "D:\\Github\\temp_cleaner\\DownloadProgressWindow.xaml",
-              "RelativeDocumentMoniker": "DownloadProgressWindow.xaml",
-              "ToolTip": "D:\\Github\\temp_cleaner\\DownloadProgressWindow.xaml",
-              "RelativeToolTip": "DownloadProgressWindow.xaml",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAANEAAAAJAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
-              "WhenOpened": "2025-09-11T22:45:26.915Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-04-24T17:15:33.732Z"
             },
             {
               "$type": "Document",
@@ -131,8 +124,7 @@
               "ToolTip": "D:\\Github\\temp_cleaner\\MainWindow.xaml",
               "RelativeToolTip": "MainWindow.xaml",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
-              "WhenOpened": "2025-05-31T04:26:44.628Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-05-31T04:26:44.628Z"
             }
           ]
         }
