@@ -5,464 +5,617 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TempCleaner"
         mc:Ignorable="d"
-        Title="Temp Cleaner" Height="550" Width="900"
+        Title="Temp Cleaner" Height="800" Width="1200"
         WindowStyle="None"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen"
         Background="Transparent"
         AllowsTransparency="True"
         MouseDown="Window_MouseDown"
-        Loaded="Window_Loaded"
-        >
-    <Border CornerRadius="40" 
-            Background="#1e2939" 
-            BorderBrush="#101828" 
-            BorderThickness="2" 
-            Padding="10">
+        Loaded="Window_Loaded">
 
-        <Grid>
+    <Window.Resources>
+        <!-- Deep Sea Abyss Color Palette -->
+        <SolidColorBrush x:Key="AbyssPrimary" Color="#0B1426"/>
+        <SolidColorBrush x:Key="AbyssSecondary" Color="#1A2332"/>
+        <SolidColorBrush x:Key="AbyssSurface" Color="#243447"/>
+        <SolidColorBrush x:Key="AbyssCard" Color="#2F4562"/>
+        <SolidColorBrush x:Key="AbyssGlass" Color="#34506D"/>
+        
+        <!-- Bioluminescent Accents -->
+        <SolidColorBrush x:Key="BioTeal" Color="#00D4AA"/>
+        <SolidColorBrush x:Key="BioBlue" Color="#0099FF"/>
+        <SolidColorBrush x:Key="BioCyan" Color="#00E5FF"/>
+        <SolidColorBrush x:Key="BioGreen" Color="#00FFA1"/>
+        
+        <!-- Text Colors -->
+        <SolidColorBrush x:Key="TextPrimary" Color="#E8F4FD"/>
+        <SolidColorBrush x:Key="TextSecondary" Color="#B3D9F2"/>
+        <SolidColorBrush x:Key="TextMuted" Color="#7BA7CC"/>
+        
+        <!-- Status Colors -->
+        <SolidColorBrush x:Key="SuccessGlow" Color="#00FFA1"/>
+        <SolidColorBrush x:Key="WarningGlow" Color="#FFB347"/>
+        <SolidColorBrush x:Key="DangerGlow" Color="#FF6B6B"/>
+        
+        <!-- Gradients -->
+        <LinearGradientBrush x:Key="AbyssGradient" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#0B1426" Offset="0"/>
+            <GradientStop Color="#1A2332" Offset="0.5"/>
+            <GradientStop Color="#243447" Offset="1"/>
+        </LinearGradientBrush>
+        
+        <LinearGradientBrush x:Key="BioGradient" StartPoint="0,0" EndPoint="1,0">
+            <GradientStop Color="#00D4AA" Offset="0"/>
+            <GradientStop Color="#0099FF" Offset="0.5"/>
+            <GradientStop Color="#00E5FF" Offset="1"/>
+        </LinearGradientBrush>
+        
+        <LinearGradientBrush x:Key="SuccessGradient" StartPoint="0,0" EndPoint="1,0">
+            <GradientStop Color="#00FFA1" Offset="0"/>
+            <GradientStop Color="#00D4AA" Offset="1"/>
+        </LinearGradientBrush>
+
+        <RadialGradientBrush x:Key="GlowEffect" Center="0.5,0.5" RadiusX="1" RadiusY="1">
+            <GradientStop Color="#4000D4AA" Offset="0"/>
+            <GradientStop Color="#2000D4AA" Offset="0.7"/>
+            <GradientStop Color="#0000D4AA" Offset="1"/>
+        </RadialGradientBrush>
+
+        <!-- Ultra Modern Button Style -->
+        <Style x:Key="AbyssButton" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource BioGradient}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="24,12"/>
+            <Setter Property="FontFamily" Value="Segoe UI Variable, Inter, Segoe UI"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid>
+                            <!-- Glow Background -->
+                            <Border Name="glowBorder" 
+                                    Background="{StaticResource GlowEffect}"
+                                    CornerRadius="16" 
+                                    Opacity="0"/>
+                            
+                            <!-- Main Button -->
+                            <Border Name="mainBorder" 
+                                    Background="{TemplateBinding Background}" 
+                                    CornerRadius="12" 
+                                    Padding="{TemplateBinding Padding}">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#00D4AA" Direction="270" ShadowDepth="0" Opacity="0.6" BlurRadius="12"/>
+                                </Border.Effect>
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="glowBorder" 
+                                                           Storyboard.TargetProperty="Opacity" 
+                                                           To="1" Duration="0:0:0.2"/>
+                                            <DoubleAnimation Storyboard.TargetName="mainBorder" 
+                                                           Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" 
+                                                           To="1.05" Duration="0:0:0.2"/>
+                                            <DoubleAnimation Storyboard.TargetName="mainBorder" 
+                                                           Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" 
+                                                           To="1.05" Duration="0:0:0.2"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="glowBorder" 
+                                                           Storyboard.TargetProperty="Opacity" 
+                                                           To="0" Duration="0:0:0.2"/>
+                                            <DoubleAnimation Storyboard.TargetName="mainBorder" 
+                                                           Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" 
+                                                           To="1" Duration="0:0:0.2"/>
+                                            <DoubleAnimation Storyboard.TargetName="mainBorder" 
+                                                           Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" 
+                                                           To="1" Duration="0:0:0.2"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="mainBorder" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.95" ScaleY="0.95"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <ScaleTransform/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Glass Control Button Style -->
+        <Style x:Key="GlassControl" TargetType="Button">
+            <Setter Property="Width" Value="40"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Background" Value="{StaticResource AbyssGlass}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BioTeal}"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Name="border" 
+                                Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="20">
+                            <Border.Effect>
+                                <DropShadowEffect Color="#00D4AA" Direction="270" ShadowDepth="0" Opacity="0.4" BlurRadius="8"/>
+                            </Border.Effect>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="{StaticResource AbyssCard}"/>
+                                <Setter TargetName="border" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect Color="#00D4AA" Direction="270" ShadowDepth="0" Opacity="0.8" BlurRadius="12"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Floating Animation -->
+        <Storyboard x:Key="FloatingAnimation" RepeatBehavior="Forever" AutoReverse="True">
+            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)" 
+                           From="0" To="-5" Duration="0:0:3"/>
+        </Storyboard>
+    </Window.Resources>
+
+    <!-- Main Container with Ocean Depth Effect -->
+    <Border CornerRadius="24" 
+            Background="{StaticResource AbyssGradient}" 
+            BorderBrush="{StaticResource BioTeal}" 
+            BorderThickness="2">
+        <Border.Effect>
+            <DropShadowEffect Color="#00D4AA" Direction="270" ShadowDepth="0" Opacity="0.3" BlurRadius="40"/>
+        </Border.Effect>
+
+        <Grid Margin="40">
             <Grid.RowDefinitions>
-                <RowDefinition Height="30"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-            <Grid>
+
+            <!-- Header Section -->
+            <Grid Grid.Row="0" Margin="0,0,0,40">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition/>
-                    <ColumnDefinition Width="40"/>
-                    <ColumnDefinition Width="40"/>
-                    <ColumnDefinition Width="20"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Text="Temp Clean" 
-                           Foreground="White" 
-                           FontSize="20" 
-                           FontFamily="Montserrat" 
-                           Grid.Column="0" 
-                           VerticalAlignment="Center" 
-                           Margin="20 0 0 0"/>
-                <Button x:Name="mibimize" 
-                        Content="-" 
-                        Width="30" 
-                        Height="30" 
-                        Grid.Column="1"  
-                        Foreground="White"
-                        FontSize="16"
-                        Click="mibimize_Click" 
-                        HorizontalAlignment="Center" 
-                        VerticalAlignment="Center" 
-                        FontWeight="Bold" 
-                        FontFamily="Arial"
-                        >
-                    <Button.Style>
-                        <Style TargetType="Button">
-                            <Setter Property="Background" Value="#615fff"/>
-                            <Style.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background" Value="#6d4cce"/>
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
-                    <Button.Template>
-                        <ControlTemplate TargetType="Button">
-                            <Border Width="30" 
-                                    Height="30" 
-                                    CornerRadius="15"
-                                    Background="{TemplateBinding Background}"
-                                    >
-                                <ContentPresenter 
-                                    Margin="-10"
-                                    Content="-"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"/>
-                            </Border>
-                        </ControlTemplate>
-                    </Button.Template>
-                </Button>
-                <Button x:Name="Close" 
-                        Content="x" 
-                        Width="30" 
-                        Height="30" 
-                        Grid.Column="2"  
-                        Foreground="White"
-                        FontSize="16"
-                        Click="Close_Click" 
-                        HorizontalAlignment="Center" 
-                        VerticalAlignment="Bottom"
-                        FontWeight="Bold" 
-                        FontFamily="Arial"
-                        >
-                    <Button.Style>
-                        <Style TargetType="Button">
-                            <Setter Property="Background" Value="#da34ae"/>
-                            <Style.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background" Value="#ff34ae"/>
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
-                    <Button.Template>
-                        <ControlTemplate TargetType="Button">
-                            <Border Width="30" 
-                Height="30" 
-                CornerRadius="15"
-                Background="{TemplateBinding Background}"
-                >
-                                <ContentPresenter
-                                    Margin="0 -20"
-                                    Content="x"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center"/>
-                            </Border>
-                        </ControlTemplate>
-                    </Button.Template>
-                </Button>
-            </Grid>
-            <StackPanel Grid.Row="1" Width="550">
-                <Image Source="pack://application:,,,/Images/Designer.png" Width="110" />
-                <TextBlock Text="Temp Cleaner" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="35" Foreground="White" FontWeight="Bold" Margin="0 10 0 0"/>
-                <ProgressBar x:Name="Progress"
-             Height="40"
-             Margin="20 10"
-             Value="0"
-             Width="400"
-             Background="#1e2939"
-             BorderBrush="#101828"
-             BorderThickness="2"
-             Padding="5"
-             Maximum="400"
-             Minimum="0"
-             IsIndeterminate="False">
-                    <ProgressBar.Resources>
-                        <Storyboard x:Key="ShimmerAnimation" RepeatBehavior="Forever">
-                            <DoubleAnimation
-                Storyboard.TargetName="Shimmer"
-                Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
-                From="-700" To="500"
-                Duration="0:0:2.2" />
-                        </Storyboard>
-                    </ProgressBar.Resources>
 
-                    <ProgressBar.Template>
-                        <ControlTemplate TargetType="ProgressBar">
-                            <Grid ClipToBounds="True">
-                                <Border Background="{TemplateBinding Background}"  
-                       CornerRadius="20"  
-                       BorderBrush="{TemplateBinding BorderBrush}"  
-                       BorderThickness="{TemplateBinding BorderThickness}"
-                       ClipToBounds="True">
-                                    <Grid>
-                                        <Rectangle x:Name="Shimmer"
-                                   Opacity="0.8"
-                                   RadiusX="20"
-                                   RadiusY="20"
-                                   Height="40"
-                                   Width="60"
-                                   Visibility="Collapsed">
-                                            <Rectangle.RenderTransform>
-                                                <TranslateTransform X="-400" />
-                                            </Rectangle.RenderTransform>
-                                            <Rectangle.Fill>
-                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                                    <GradientStop Color="#8a0194" Offset="0.0"/>
-                                                    <GradientStop Color="#a800b7" Offset="0.5"/>
-                                                    <GradientStop Color="#e12afb" Offset="1.0"/>
-                                                </LinearGradientBrush>
-                                            </Rectangle.Fill>
-                                        </Rectangle>
-
-                                        <Border x:Name="PART_Track" 
-                                CornerRadius="20" 
-                                HorizontalAlignment="Left" 
-                                Width="{TemplateBinding Value}" 
-                                Margin="2" 
-                                ClipToBounds="True">
-                                            <Border.Background>
-                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                                    <GradientStop Color="#8a0194" Offset="0.0"/>
-                                                    <GradientStop Color="#a800b7" Offset="0.5"/>
-                                                    <GradientStop Color="#e12afb" Offset="1.0"/>
-                                                </LinearGradientBrush>
-                                            </Border.Background>
-                                        </Border>
-                                    </Grid>
-                                </Border>
-                            </Grid>
-
-                            <ControlTemplate.Triggers>
-                                <!-- Indeterminate State: Show shimmer, hide progress bar -->
-                                <Trigger Property="IsIndeterminate" Value="True">
-                                    <Setter TargetName="Shimmer" Property="Visibility" Value="Visible"/>
-                                    <Setter TargetName="PART_Track" Property="Visibility" Value="Collapsed"/>
-                                    <Trigger.EnterActions>
-                                        <BeginStoryboard Storyboard="{StaticResource ShimmerAnimation}" />
-                                    </Trigger.EnterActions>
-                                </Trigger>
-
-                                <!-- Determinate State: Hide shimmer, show progress bar -->
-                                <Trigger Property="IsIndeterminate" Value="False">
-                                    <Setter TargetName="Shimmer" Property="Visibility" Value="Collapsed"/>
-                                    <Setter TargetName="PART_Track" Property="Visibility" Value="Visible"/>
-                                </Trigger>
-
-                                <Trigger Property="Value" Value="0">
-                                    <Setter TargetName="Shimmer" Property="Visibility" Value="Visible"/>
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </ProgressBar.Template>
-                </ProgressBar>
-
-                <TextBlock
-                    x:Name="Percent"
-                    Text="99"
-                    FontSize="18"
-                    Foreground="White"
-                    HorizontalAlignment="Center"
-                    Margin="0 -44 0 0"
-                    Visibility="Hidden"
+                <!-- Brand Identity -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Animated Logo -->
+                    <Border Width="60" Height="60" 
+                            CornerRadius="30" 
+                            Margin="0,0,20,0">
+                        
+                        <Border.RenderTransform>
+                            <TranslateTransform/>
+                        </Border.RenderTransform>
+                        <Border.Triggers>
+                            <EventTrigger RoutedEvent="Loaded">
+                                <BeginStoryboard Storyboard="{StaticResource FloatingAnimation}"/>
+                            </EventTrigger>
+                        </Border.Triggers>
+                        <Border.Background>
+                            <ImageBrush ImageSource="Images/Designer.png" Stretch="UniformToFill"/>
+                        </Border.Background>
+                    </Border>
                     
-                    />
-                <Grid>
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="DeepCleaner" 
+                                       Foreground="{StaticResource TextPrimary}" 
+                                       FontSize="32" 
+                                       FontFamily="Segoe UI Variable, Inter, Segoe UI" 
+                                       FontWeight="Bold"/>
+                            <TextBlock Text="Pro" 
+                                       Foreground="{StaticResource BioTeal}" 
+                                       FontSize="20" 
+                                       FontFamily="Segoe UI Variable, Inter, Segoe UI" 
+                                       FontWeight="Bold"
+                                       VerticalAlignment="Top"
+                                       Margin="8,4,0,0"/>
+                        </StackPanel>
+                        <TextBlock Text="Advanced Deep Sea System Optimization" 
+                                   Foreground="{StaticResource TextMuted}" 
+                                   FontSize="14" 
+                                   FontFamily="Segoe UI Variable, Inter, Segoe UI"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Window Controls -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button x:Name="mibimize" 
+                            Content="─" 
+                            Style="{StaticResource GlassControl}"
+                            Click="mibimize_Click" 
+                            Margin="0,0,16,0"/>
+                    
+                    <Button x:Name="Close" 
+                            Content="✕" 
+                            Click="Close_Click">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource GlassControl}">
+                                <Setter Property="Background" Value="{StaticResource DangerGlow}"/>
+                                <Setter Property="BorderBrush" Value="{StaticResource DangerGlow}"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#FF8E8E"/>
+                                        <Setter Property="BorderBrush" Value="#FF8E8E"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </StackPanel>
+            </Grid>
+
+            <!-- Main Content Area -->
+            <Grid Grid.Row="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Stats Dashboard -->
+                <Grid x:Name="StatsGrid" Grid.Row="0" Margin="0,0,0,40">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition/>
                         <ColumnDefinition/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
                     </Grid.ColumnDefinitions>
-                    <Button 
-                       x:Name="Check" 
-                       Content="Check" 
-                       HorizontalAlignment="Center"
-                       Padding="40 20"
-                       Cursor="Hand" 
-                        Foreground="White" 
-                        FontSize="20" 
-                        Width="110"
-                        Click="Check_Click">
-                        <Button.Template>
-                            <ControlTemplate TargetType="Button">
-                                <Grid>
-                                    <Border 
-                                       CornerRadius="10"
-                                       BorderBrush="#372aac"
-                                       BorderThickness="2"
-                                       Padding="{TemplateBinding Padding}">
-                                        <Border.Background>
-                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                                <GradientStop Color="#372aac" Offset="0.0"/>
-                                                <GradientStop Color="#4f39f6" Offset="0.5"/>
-                                                <GradientStop Color="#7c86ff" Offset="1.0"/>
-                                            </LinearGradientBrush>
-                                        </Border.Background>
-                                    </Border>
-                                    <ContentPresenter 
-                                       HorizontalAlignment="Center" 
-                                       VerticalAlignment="Center" 
-                                       Content="{TemplateBinding Content}"
-                                       />
-                                </Grid>
-                            </ControlTemplate>
-                        </Button.Template>
-                    </Button>
-                    <Button 
-                       x:Name="Clear" 
-                       Content="Clear" 
-                       HorizontalAlignment="Center"
-                       Padding="20 10"
-                       Grid.Column="1"
-                       Cursor="No"
-                       Foreground="White" 
-                       FontSize="20" 
-                       Width="110" 
-                       Height="50"
-                       Click="Clear_Click"
-                       IsEnabled="False">
-                        <Button.Template>
-                            <ControlTemplate TargetType="Button">
-                                <Grid>
-                                    <Border 
-                                       CornerRadius="10"
-                                       BorderBrush="#005f5a"
-                                       BorderThickness="2"
-                                       Padding="{TemplateBinding Padding}">
-                                        <Border.Background>
-                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                                <GradientStop Color="#005f5a" Offset="0.0"/>
-                                                <GradientStop Color="#009689" Offset="0.5"/>
-                                                <GradientStop Color="#00d5be" Offset="1.0"/>
-                                            </LinearGradientBrush>
-                                        </Border.Background>
-                                    </Border>
-                                    <ContentPresenter 
-                                       HorizontalAlignment="Center" 
-                                       VerticalAlignment="Center" 
-                                       Content="{TemplateBinding Content}"/>
-                                </Grid>
-                            </ControlTemplate>
-                        </Button.Template>
-                    </Button>
+                    
+                    <!-- System Status Card -->
+                    <Border Grid.Column="0" 
+                            Background="{StaticResource AbyssSurface}"
+                            CornerRadius="20"
+                            BorderBrush="{StaticResource BioTeal}"
+                            BorderThickness="1"
+                            Padding="24"
+                            Margin="0,0,10,0">
+                        <Border.Effect>
+                            <DropShadowEffect Color="#00D4AA" Direction="270" ShadowDepth="0" Opacity="0.2" BlurRadius="20"/>
+                        </Border.Effect>
+                        <StackPanel>
+                            <TextBlock Text="💻" FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,12"/>
+                            <TextBlock Text="System" 
+                                       Foreground="{StaticResource TextPrimary}" 
+                                       FontSize="16" 
+                                       FontWeight="SemiBold"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,0,0,6"/>
+                            <TextBlock Text="Ready" 
+                                       Foreground="{StaticResource SuccessGlow}" 
+                                       FontSize="12" 
+                                       HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
 
+                    <!-- Files Found Card -->
+                    <Border Grid.Column="1" 
+                            Background="{StaticResource AbyssSurface}"
+                            CornerRadius="20"
+                            BorderBrush="{StaticResource BioTeal}"
+                            BorderThickness="1"
+                            Padding="24"
+                            Margin="5,0">
+                        <Border.Effect>
+                            <DropShadowEffect Color="#00D4AA" Direction="270" ShadowDepth="0" Opacity="0.2" BlurRadius="20"/>
+                        </Border.Effect>
+                        <StackPanel>
+                            <TextBlock Text="📁" FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,12"/>
+                            <TextBlock x:Name="countNum" 
+                                       Text="0 Files" 
+                                       Foreground="{StaticResource TextPrimary}" 
+                                       FontSize="16" 
+                                       FontWeight="SemiBold"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,0,0,6"/>
+                            <TextBlock Text="Found" 
+                                       Foreground="{StaticResource TextSecondary}" 
+                                       FontSize="12" 
+                                       HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Progress Card -->
+                    <Border Grid.Column="2" 
+                            Background="{StaticResource AbyssSurface}"
+                            CornerRadius="20"
+                            BorderBrush="{StaticResource BioTeal}"
+                            BorderThickness="1"
+                            Padding="24"
+                            Margin="5,0">
+                        <Border.Effect>
+                            <DropShadowEffect Color="#00D4AA" Direction="270" ShadowDepth="0" Opacity="0.2" BlurRadius="20"/>
+                        </Border.Effect>
+                        <StackPanel>
+                            <TextBlock Text="⚡" FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,12"/>
+                            <TextBlock x:Name="Percent" 
+                                       Text="0%" 
+                                       Foreground="{StaticResource TextPrimary}" 
+                                       FontSize="16" 
+                                       FontWeight="SemiBold"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,0,0,6"/>
+                            <TextBlock Text="Complete" 
+                                       Foreground="{StaticResource TextSecondary}" 
+                                       FontSize="12" 
+                                       HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Storage Saved Card -->
+                    <Border Grid.Column="3" 
+                            Background="{StaticResource AbyssSurface}"
+                            CornerRadius="20"
+                            BorderBrush="{StaticResource BioTeal}"
+                            BorderThickness="1"
+                            Padding="24"
+                            Margin="10,0,0,0">
+                        <Border.Effect>
+                            <DropShadowEffect Color="#00D4AA" Direction="270" ShadowDepth="0" Opacity="0.2" BlurRadius="20"/>
+                        </Border.Effect>
+                        <StackPanel>
+                            <TextBlock Text="💾" FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,12"/>
+                            <TextBlock x:Name="StorageSize"
+                                       Text="0 GB" 
+                                       Foreground="{StaticResource TextPrimary}" 
+                                       FontSize="16" 
+                                       FontWeight="SemiBold"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,0,0,6"/>
+                            <TextBlock Text="Saved" 
+                                       Foreground="{StaticResource TextSecondary}" 
+                                       FontSize="12" 
+                                       HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
                 </Grid>
-                
-                <TextBlock x:Name="message" 
-                           Text="Starting"
-                           Foreground="White"
-                           FontSize="16"
-                           Margin="0 10 0 0"
-                           Visibility="Hidden"
-                           TextTrimming="CharacterEllipsis"
-                            TextWrapping="NoWrap"
-                            TextAlignment="Left"
-                            VerticalAlignment="Center"
-                            HorizontalAlignment="Center"
-                            ClipToBounds="True"
-                           />
-                <TextBlock x:Name="countNum" 
-                           Text=""
-                           Foreground="White"
-                           FontSize="16"
-                           Margin="0 -100 0 0"
-                           Visibility="Hidden"
-                           TextTrimming="CharacterEllipsis"
-                            TextWrapping="NoWrap"
-                            TextAlignment="Left"
-                            VerticalAlignment="Center"
-                            HorizontalAlignment="Center"
-                            ClipToBounds="True"
-                           />
-                <!--<RichTextBox x:Name="Logs"  
-                            Margin="20 10"  
-                            VerticalScrollBarVisibility="Auto"  
-                            IsReadOnly="True"  
-                            Background="Transparent"  
-                            Height="170"  
-                            Foreground="White">
-                    <RichTextBox.Resources>
-                        <Style TargetType="{x:Type ScrollBar}">
-                            <Setter Property="SnapsToDevicePixels" Value="True"/>
-                            <Setter Property="OverridesDefaultStyle" Value="True"/>
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="{x:Type ScrollBar}">
-                                        <Grid Background="#1e2939">
-                                            <Track Name="PART_Track"
-                               IsDirectionReversed="False">
-                                                <Track.DecreaseRepeatButton>
-                                                    <RepeatButton Style="{x:Null}" />
-                                                </Track.DecreaseRepeatButton>
-                                                <Track.Thumb>
-                                                    <Thumb>
-                                                        <Thumb.Template>
-                                                            <ControlTemplate TargetType="Thumb">
-                                                                <Border x:Name="thumbBorder"
-                                                    Background="#615fff"
-                                                    BorderBrush="#372aac"
-                                                    BorderThickness="1"
-                                                    CornerRadius="4"
-                                                    Margin="2">
-                                                                </Border>
-                                                                <ControlTemplate.Triggers>
-                                                                    <Trigger Property="IsMouseOver" Value="True">
-                                                                        <Setter TargetName="thumbBorder" Property="Background" Value="#7d73ff"/>
-                                                                    </Trigger>
-                                                                    <Trigger Property="IsDragging" Value="True">
-                                                                        <Setter TargetName="thumbBorder" Property="Background" Value="#a9a2ff"/>
-                                                                    </Trigger>
-                                                                </ControlTemplate.Triggers>
-                                                            </ControlTemplate>
-                                                        </Thumb.Template>
-                                                    </Thumb>
-                                                </Track.Thumb>
-                                                <Track.IncreaseRepeatButton>
-                                                    <RepeatButton Style="{x:Null}" />
-                                                </Track.IncreaseRepeatButton>
-                                            </Track>
-                                        </Grid>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                        </Style>
-                    </RichTextBox.Resources>
 
-                </RichTextBox>-->
-                <ListBox x:Name="Logs"
-                         
-         Margin="20 10"
-         Background="Transparent"
-         Height="170"
-         Foreground="White"
-         BorderThickness="2"
-         FontFamily="Consolas"
-         FontSize="13"
-         IsHitTestVisible="False"
-         ScrollViewer.VerticalScrollBarVisibility="Auto"
-         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-         VirtualizingPanel.IsVirtualizing="True"
-         VirtualizingPanel.VirtualizationMode="Recycling"
-         ScrollViewer.CanContentScroll="True">
+                <!-- Progress Section -->
+                <StackPanel Grid.Row="1" Margin="0,0,0,40">
+                    <!-- Custom Bioluminescent Progress Bar -->
+                    <Grid Name="ProgressContainer" Height="20" Margin="0,0,0,16" ClipToBounds="True">
+                        <!-- Background -->
+                        <Border Background="{StaticResource AbyssSurface}" 
+                                CornerRadius="10"
+                                BorderBrush="{StaticResource BioTeal}"
+                                BorderThickness="2"
+                                ClipToBounds="True"/>
+                        
+                        <!-- Clipping Container for Progress Elements -->
+                        <Border CornerRadius="8" Margin="2" ClipToBounds="True">
+                            <!-- Progress Fill -->
+                            <Border Name="ProgressFill" 
+                                    Background="{StaticResource BioGradient}"
+                                    CornerRadius="6"
+                                    HorizontalAlignment="Left"
+                                    Width="0">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#00D4AA" Direction="0" ShadowDepth="0" Opacity="1" BlurRadius="16"/>
+                                </Border.Effect>
+                            </Border>
+                        </Border>
+                        
+                        <!-- Shimmer Container with Clipping -->
+                        <Border CornerRadius="8" Margin="2" ClipToBounds="True">
+                            <!-- Shimmer for Indeterminate State -->
+                            <Rectangle Name="ProgressShimmer" 
+                                       Opacity="0.8" 
+                                       Fill="{StaticResource BioGradient}"
+                                       RadiusX="6" 
+                                       RadiusY="6" 
+                                       Width="100" 
+                                       Height="16"
+                                       Visibility="Collapsed"
+                                       HorizontalAlignment="Left">
+                                <Rectangle.RenderTransform>
+                                    <TranslateTransform X="-100"/>
+                                </Rectangle.RenderTransform>
+                            </Rectangle>
+                        </Border>
+                    </Grid>
+                    
+                    <!-- Hidden Standard Progress Bar for Logic -->
+                    <ProgressBar x:Name="Progress"
+                                 Height="0"
+                                 Value="0"
+                                 Maximum="100"
+                                 Minimum="0"
+                                 IsIndeterminate="False"
+                                 Visibility="Hidden"/>
+                    
+                    <!-- Status Message -->
+                    <TextBlock x:Name="message" 
+                               Text="Ready to dive deep into system cleanup" 
+                               FontSize="16" 
+                               Foreground="{StaticResource TextSecondary}" 
+                               HorizontalAlignment="Center"
+                               FontFamily="Segoe UI Variable, Inter, Segoe UI"/>
+                </StackPanel>
 
-                    <!-- Custom Scrollbar Style -->
-                    <ListBox.Resources>
-                        <Style TargetType="{x:Type ScrollBar}">
-                            <Setter Property="SnapsToDevicePixels" Value="True"/>
-                            <Setter Property="OverridesDefaultStyle" Value="True"/>
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="ScrollBar">
-                                        <Grid Background="#1e2939">
-                                            <Track Name="PART_Track" IsDirectionReversed="False">
-                                                <Track.DecreaseRepeatButton>
-                                                    <RepeatButton Style="{x:Null}" />
-                                                </Track.DecreaseRepeatButton>
-                                                <Track.Thumb>
-                                                    <Thumb>
-                                                        <Thumb.Template>
-                                                            <ControlTemplate TargetType="Thumb">
-                                                                <Border x:Name="thumbBorder"
-                                                        Background="#615fff"
-                                                        BorderBrush="#372aac"
-                                                        BorderThickness="1"
-                                                        CornerRadius="4"
-                                                        Margin="2"/>
-                                                                <ControlTemplate.Triggers>
-                                                                    <Trigger Property="IsMouseOver" Value="True">
-                                                                        <Setter TargetName="thumbBorder" Property="Background" Value="#7d73ff"/>
-                                                                    </Trigger>
-                                                                    <Trigger Property="IsDragging" Value="True">
-                                                                        <Setter TargetName="thumbBorder" Property="Background" Value="#a9a2ff"/>
-                                                                    </Trigger>
-                                                                </ControlTemplate.Triggers>
-                                                            </ControlTemplate>
-                                                        </Thumb.Template>
-                                                    </Thumb>
-                                                </Track.Thumb>
-                                                <Track.IncreaseRepeatButton>
-                                                    <RepeatButton Style="{x:Null}" />
-                                                </Track.IncreaseRepeatButton>
-                                            </Track>
-                                        </Grid>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                        </Style>
-                    </ListBox.Resources>
+                <!-- Action Center -->
+                <Grid Grid.Row="2" Margin="0,0,0,40">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition Width="32"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
 
-                    <!-- Enable Virtualization -->
-                    <ListBox.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <VirtualizingStackPanel />
-                        </ItemsPanelTemplate>
-                    </ListBox.ItemsPanel>
+                    <!-- Scan Button -->
+                    <Button x:Name="Check" 
+                            Content="🔍 Deep Scan" 
+                            Style="{StaticResource AbyssButton}"
+                            FontSize="18"
+                            Height="64"
+                            Click="Check_Click"/>
 
-                    <!-- Wrap each item -->
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding}" TextWrapping="Wrap" />
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
+                    <!-- Clean Button -->
+                    <Button x:Name="Clear" 
+                            Content="🧽 Purify System" 
+                            Grid.Column="2"
+                            FontSize="18"
+                            Height="64"
+                            Click="Clear_Click"
+                            IsEnabled="False">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource AbyssButton}">
+                                <Setter Property="Background" Value="{StaticResource SuccessGradient}"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter Property="Background" Value="{StaticResource AbyssSurface}"/>
+                                        <Setter Property="Foreground" Value="{StaticResource TextMuted}"/>
+                                        <Setter Property="Cursor" Value="No"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </Grid>
 
+                <!-- Deep Sea Activity Monitor -->
+                <Border Grid.Row="3" 
+                        Background="{StaticResource AbyssSurface}"
+                        CornerRadius="20"
+                        BorderBrush="{StaticResource BioTeal}"
+                        BorderThickness="1"
+                        Padding="32">
+                    <Border.Effect>
+                        <DropShadowEffect Color="#00D4AA" Direction="270" ShadowDepth="0" Opacity="0.2" BlurRadius="20"/>
+                    </Border.Effect>
 
-            </StackPanel>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Activity Header -->
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
+                            <Border Width="32" Height="32" CornerRadius="16" Margin="0,0,12,0">
+                                <Border.Background>
+                                    <ImageBrush ImageSource="Images/Designer.png" Stretch="UniformToFill"/>
+                                </Border.Background>
+                            </Border>
+                            <TextBlock Text="Deep Sea Activity Monitor" 
+                                       Foreground="{StaticResource TextPrimary}" 
+                                       FontSize="20" 
+                                       FontWeight="SemiBold"
+                                       VerticalAlignment="Center"
+                                       FontFamily="Segoe UI Variable, Inter, Segoe UI"/>
+                        </StackPanel>
+
+                        <!-- Activity List -->
+                        <ListBox x:Name="Logs" Grid.Row="1"
+                                 Background="Transparent"
+                                 Foreground="{StaticResource TextSecondary}"
+                                 BorderThickness="0"
+                                 FontFamily="JetBrains Mono, Consolas, Courier New"
+                                 FontSize="10"
+                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 VirtualizingPanel.IsVirtualizing="True"
+                                 VirtualizingPanel.VirtualizationMode="Recycling"
+                                 ScrollViewer.CanContentScroll="True">
+
+                            <ListBox.Resources>
+                                <!-- Custom Scrollbar for Deep Sea Theme -->
+                                <Style TargetType="{x:Type ScrollBar}">
+                                    <Setter Property="SnapsToDevicePixels" Value="True"/>
+                                    <Setter Property="OverridesDefaultStyle" Value="True"/>
+                                    <Setter Property="Width" Value="12"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ScrollBar">
+                                                <Grid Background="Transparent">
+                                                    <Track Name="PART_Track" IsDirectionReversed="True" Width="12">
+                                                        <Track.DecreaseRepeatButton>
+                                                            <RepeatButton Style="{x:Null}"/>
+                                                        </Track.DecreaseRepeatButton>
+                                                        <Track.Thumb>
+                                                            <Thumb>
+                                                                <Thumb.Template>
+                                                                    <ControlTemplate TargetType="Thumb">
+                                                                        <Border Background="{StaticResource BioTeal}" 
+                                                                                CornerRadius="6"
+                                                                                Margin="2">
+                                                                            <Border.Effect>
+                                                                                <DropShadowEffect Color="#00D4AA" Direction="0" ShadowDepth="0" Opacity="0.6" BlurRadius="4"/>
+                                                                            </Border.Effect>
+                                                                        </Border>
+                                                                    </ControlTemplate>
+                                                                </Thumb.Template>
+                                                            </Thumb>
+                                                        </Track.Thumb>
+                                                        <Track.IncreaseRepeatButton>
+                                                            <RepeatButton Style="{x:Null}"/>
+                                                        </Track.IncreaseRepeatButton>
+                                                    </Track>
+                                                </Grid>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                </Style>
+                            </ListBox.Resources>
+
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <VirtualizingStackPanel/>
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{StaticResource AbyssCard}" 
+                                            CornerRadius="8" 
+                                            Padding="12,8" 
+                                            Margin="0,2">
+                                        <TextBlock Text="{Binding}" 
+                                                   TextWrapping="Wrap" 
+                                                   Foreground="{StaticResource TextPrimary}"
+                                                   FontFamily="JetBrains Mono, Consolas, Courier New"/>
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Grid>
+                </Border>
+            </Grid>
         </Grid>
     </Border>
 </Window>

@@ -14,11 +14,13 @@
     {
         public string Version { set; get; }
         public string Url { set; get; }
+        public string FileName { set; get; }
 
-        public GetInformations(string _version, string _url)
+        public GetInformations(string _version, string _url,string _name)
         {
             Version = _version;
             Url = _url;
+            FileName = _name;
         }
     }
 }
