@@ -119,8 +119,7 @@ namespace TempCleaner
                 @"C:\Windows\System32\LogFiles",
                 @"C:\Windows\Logs",
                 @"C:\Windows\Debug",
-                @"C:\Windows\Minidump",
-                @"C:\Windows\Downloaded Program Files",
+    
                 
                 // User Profile Temporary Files
                 $@"C:\Users\{name[1]}\AppData\Local\Temp",
