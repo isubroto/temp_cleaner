@@ -124,31 +124,6 @@ namespace TempCleaner
                 // User Profile Temporary Files
                 $@"C:\Users\{name[1]}\AppData\Local\Temp",
                 $@"C:\Users\{name[1]}\AppData\Local\CrashDumps",
-                
-                // Windows Update Cache
-                @"C:\Windows\SoftwareDistribution\DataStore",
-               
-                // Recent Files and Jump Lists
-                $@"C:\Users\{name[1]}\AppData\Roaming\Microsoft\Windows\Recent",
-                $@"C:\Users\{name[1]}\AppData\Roaming\Microsoft\Windows\Recent\AutomaticDestinations",
-                $@"C:\Users\{name[1]}\AppData\Roaming\Microsoft\Windows\Recent\CustomDestinations",
-                
-                // DirectX Shader Cache
-                $@"C:\Users\{name[1]}\AppData\Local\D3DSCache",
-                
-                // Windows Store Cache
-                $@"C:\Users\{name[1]}\AppData\Local\Packages",
-                
-                // Event Logs
-                @"C:\Windows\System32\winevt\Logs",
-                
-                // Setup Logs
-                @"C:\Windows\Panther",
-                @"C:\Windows\inf\setupapi.dev.log",
-                
-                // Additional Common Cache Locations
-                $@"C:\Users\{name[1]}\AppData\LocalLow\Sun\Java\Deployment\cache",
-                $@"C:\Users\{name[1]}\AppData\Local\Adobe\Common\Media Cache Files"
             };
 
             List<string> allItems = new();
