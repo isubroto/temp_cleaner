@@ -121,20 +121,13 @@ namespace TempCleaner
                 @"C:\Windows\Debug",
                 @"C:\Windows\Minidump",
                 @"C:\Windows\Downloaded Program Files",
-                @"C:\Windows\System32\spool\PRINTERS",
                 
                 // User Profile Temporary Files
                 $@"C:\Users\{name[1]}\AppData\Local\Temp",
-                $@"C:\Users\{name[1]}\AppData\Local\Microsoft\Windows\INetCache",
-                $@"C:\Users\{name[1]}\AppData\Local\Microsoft\Windows\Explorer",
-                $@"C:\Users\{name[1]}\AppData\Local\Microsoft\Windows\WebCache",
-                $@"C:\Users\{name[1]}\AppData\Local\Microsoft\Windows\Temporary Internet Files",
                 $@"C:\Users\{name[1]}\AppData\Local\CrashDumps",
                 
                 // Windows Update Cache
                 @"C:\Windows\SoftwareDistribution\DataStore",
-                @"C:\ProgramData\Microsoft\Windows\WER\ReportQueue",
-                @"C:\ProgramData\Microsoft\Windows\WER\ReportArchive",
                
                 // Recent Files and Jump Lists
                 $@"C:\Users\{name[1]}\AppData\Roaming\Microsoft\Windows\Recent",
