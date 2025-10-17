@@ -18,7 +18,7 @@
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-    <Version>0.1.32.5</Version>
+    <Version>0.1.33.9</Version>
   </PropertyGroup>
 
   <!-- ... The rest of your file stays the same ... -->
@@ -40,4 +40,5 @@
   </ItemGroup>
 
 </Project>
+
 
