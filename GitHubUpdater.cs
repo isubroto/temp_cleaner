@@ -10,125 +10,143 @@ namespace TempCleaner
     public static class GitHubUpdater
     {
         public static async Task<GetInformations> GetLatestReleaseVersionAsync(string owner, string repo, string token)
+{
+    try
+    {
+        using (HttpClient client = new HttpClient())
         {
-            try
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
+            client.DefaultRequestHeaders.Add("User-Agent", "TempCleaner");
+            client.DefaultRequestHeaders.Add("X-GitHub-Api-Version", "2022-11-28"); // CHANGE: always set
+
+            string url = $@"https://api.github.com/repos/{owner}/{repo}/releases/latest";
+            client.Timeout = TimeSpan.FromSeconds(15);
+
+            // CHANGE: local helper to GET with or without token
+            async Task<HttpResponseMessage> GetReleaseAsync(bool useToken)
             {
-                using (HttpClient client = new HttpClient())
+                if (useToken && !string.IsNullOrWhiteSpace(token))
                 {
-                    ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
-                    client.DefaultRequestHeaders.Add("User-Agent", "TempCleaner");
-                    
-                    // Enhanced authentication for private repos
-                    if (!string.IsNullOrEmpty(token))
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.Trim());
+                }
+                else
+                {
+                    client.DefaultRequestHeaders.Authorization = null;
+                }
+                return await client.GetAsync(url);
+            }
+
+            // CHANGE: try anonymous first
+            using HttpResponseMessage responseAnon = await GetReleaseAsync(useToken: false);
+
+            HttpResponseMessage responseFinal = responseAnon;
+            bool usedToken = false; // CHANGE: track which mode succeeded
+
+            // CHANGE: if anon failed and we have a token, retry with token
+            if (!responseAnon.IsSuccessStatusCode &&
+                !string.IsNullOrWhiteSpace(token) &&
+                (responseAnon.StatusCode == HttpStatusCode.NotFound ||
+                 responseAnon.StatusCode == HttpStatusCode.Unauthorized ||
+                 responseAnon.StatusCode == HttpStatusCode.Forbidden))
+            {
+                responseAnon.Dispose();
+                var responseWithToken = await GetReleaseAsync(useToken: true);
+                responseFinal = responseWithToken;
+                usedToken = true;
+            }
+
+            // CHANGE: handle common errors after both attempts
+            if (responseFinal.StatusCode == HttpStatusCode.NotFound)
+            {
+                throw new HttpRequestException("Repository or releases not found. If the repo is private, ensure your token has access.");
+            }
+            if (responseFinal.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                throw new HttpRequestException("GitHub authentication failed. The provided token may be invalid or expired.");
+            }
+            if (responseFinal.StatusCode == HttpStatusCode.Forbidden)
+            {
+                var body = await responseFinal.Content.ReadAsStringAsync();
+                if (body.IndexOf("rate limit", StringComparison.OrdinalIgnoreCase) >= 0)
+                    throw new HttpRequestException("GitHub rate limit hit. Try again later or provide a token.");
+                if (body.IndexOf("User-Agent", StringComparison.OrdinalIgnoreCase) >= 0)
+                    throw new HttpRequestException("GitHub requires a User-Agent header. Please set it.");
+                responseFinal.EnsureSuccessStatusCode();
+            }
+
+            responseFinal.EnsureSuccessStatusCode();
+
+            string result = await responseFinal.Content.ReadAsStringAsync();
+            using JsonDocument document = JsonDocument.Parse(result);
+            JsonElement root = document.RootElement;
+
+            if (root.TryGetProperty("tag_name", out var tagName))
+            {
+                string tag = tagName.GetString()!;
+                string versionForFile = tag.TrimStart('v', 'V'); // CHANGE: for filename
+                string? msiUrl = null;
+                string? msiName = null;
+
+                if (root.TryGetProperty("assets", out var assets) && assets.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var asset in assets.EnumerateArray())
                     {
-                        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                        client.DefaultRequestHeaders.Add("X-GitHub-Api-Version", "2022-11-28");
-                    }
-
-                    // Use GitHub API to get latest release info
-                    string url = $@"https://api.github.com/repos/{owner}/{repo}/releases/latest";
-
-                    // Set longer timeout for private repo authentication
-                    client.Timeout = TimeSpan.FromSeconds(15);
-
-                    using (HttpResponseMessage response = await client.GetAsync(url))
-                    {
-                        // Better error handling for private repos
-                        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                        if (asset.TryGetProperty("name", out var nameProp))
                         {
-                            throw new HttpRequestException("Repository not found or access denied. Please check if:\n• The repository exists\n• Your GitHub token has access to this private repository\n• The token has 'repo' scope permissions");
-                        }
-                        else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-                        {
-                            throw new HttpRequestException("GitHub authentication failed. Please check your GitHub token.");
-                        }
-                        
-                        response.EnsureSuccessStatusCode();
-
-                        string result = await response.Content.ReadAsStringAsync();
-                        using JsonDocument document = JsonDocument.Parse(result);
-                        JsonElement root = document.RootElement;
-                        
-                        if (root.TryGetProperty("tag_name", out var tagName))
-                        {
-                            string version = tagName.GetString()!;
-                            string? msiUrl = null;
-                            string? msiName = null;
-
-                            // First, try to get MSI URL from assets (for public repos or properly configured private repos)
-                            if (root.TryGetProperty("assets", out var assets) && assets.ValueKind == JsonValueKind.Array)
+                            string assetName = nameProp.GetString() ?? "unknown";
+                            if (assetName.EndsWith(".msi", StringComparison.OrdinalIgnoreCase))
                             {
-                                var assetList = new List<string>();
-                                foreach (var asset in assets.EnumerateArray())
+                                if (usedToken)
                                 {
-                                    if (asset.TryGetProperty("name", out var nameProp))
+                                    // CHANGE: private path (token): use API asset URL (requires Accept: application/octet-stream on download)
+                                    if (asset.TryGetProperty("url", out var apiUrlProp))
                                     {
-                                        string assetName = nameProp.GetString() ?? "unknown";
-                                        assetList.Add(assetName);
-                                        
-                                        // Check for MSI file
-                                        if (assetName.EndsWith(".msi", StringComparison.OrdinalIgnoreCase) &&
-                                            asset.TryGetProperty("url", out var urlProp))
-                                        {
-                                            msiUrl = urlProp.GetString();
-                                            msiName= nameProp.GetString();
-                                            break; // Get the first .msi file
-                                        }
+                                        msiUrl = apiUrlProp.GetString();
+                                        msiName = assetName;
+                                        break;
                                     }
                                 }
-
-                                // If no MSI found in assets, construct common MSI URLs for this version
-                                if (string.IsNullOrEmpty(msiUrl))
+                                else
                                 {
-                                    // Try common MSI naming patterns and construct direct download URLs
-                                    string[] commonMsiNames = {
-                                        $"TempCleaner-{version}.msi",
-                                        $"DeepCleaner-Pro-{version}.msi",
-                                        $"temp-cleaner-{version}.msi",
-                                        "TempCleaner-Setup.msi",
-                                        "DeepCleaner-Pro-Setup.msi",
-                                        "TempCleaner.msi"
-                                    };
-
-                                    // Construct direct GitHub release download URL
-                                    string baseDownloadUrl = $"https://github.com/{owner}/{repo}/releases/download/{version}";
-                                    
-                                    // Return the first common pattern as the URL to try
-                                    // The calling code will test these URLs to find the working one
-                                    msiUrl = $"{baseDownloadUrl}/{commonMsiNames[0]}";
-                                    
-                                    System.Diagnostics.Debug.WriteLine($"No MSI in assets. Available assets: {string.Join(", ", assetList)}");
-                                    System.Diagnostics.Debug.WriteLine($"Constructed MSI URL: {msiUrl}");
+                                    // CHANGE: public path: use direct browser download URL
+                                    if (asset.TryGetProperty("browser_download_url", out var bduProp))
+                                    {
+                                        msiUrl = bduProp.GetString();
+                                        msiName = assetName;
+                                        break;
+                                    }
                                 }
                             }
-                            else
-                            {
-                                // No assets found, construct default MSI URL
-                                string baseDownloadUrl = $"https://github.com/{owner}/{repo}/releases/download/{version}";
-                                msiUrl = $"{baseDownloadUrl}/TempCleaner-{version}.msi";
-                                
-                                System.Diagnostics.Debug.WriteLine($"No assets property found. Constructed default MSI URL: {msiUrl}");
-                            }
-
-                            return new GetInformations(version, msiUrl ?? string.Empty, msiName ?? string.Empty);
                         }
-
-                        return null;
                     }
                 }
-            }
-            catch (HttpRequestException ex)
-            {
-                MessageBox.Show($"🌊 GitHub API Access Error\n\n{ex.Message}", "Connection Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Update Check Error: {ex.Message}", "General Error", MessageBoxButton.OK, MessageBoxImage.Error);
+
+                if (string.IsNullOrEmpty(msiUrl))
+                {
+                    // CHANGE: fallback to predictable public URL
+                    string baseDownloadUrl = $"https://github.com/{owner}/{repo}/releases/download/{tag}";
+                    msiName = $"Temp_Cleaner-{versionForFile}.msi";
+                    msiUrl = $"{baseDownloadUrl}/{msiName}";
+                }
+
+                return new GetInformations(tag, msiUrl ?? string.Empty, msiName ?? string.Empty);
             }
 
             return null;
         }
+    }
+    catch (HttpRequestException ex)
+    {
+        MessageBox.Show($"🌊 GitHub API Access Error\n\n{ex.Message}", "Connection Error", MessageBoxButton.OK, MessageBoxImage.Error);
+    }
+    catch (Exception ex)
+    {
+        MessageBox.Show($"Update Check Error: {ex.Message}", "General Error", MessageBoxButton.OK, MessageBoxImage.Error);
+    }
+
+    return null;
+}
 
 
         public static async Task DownloadUpdateAsync(string downloadUrl, string filePath)
