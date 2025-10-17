@@ -26,7 +26,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
@@ -54,11 +54,13 @@ jobs:
           $versionTag = "<Version>$safeVersion</Version>"
 
           $content = Get-Content $projFile.FullName -Raw
+
           if ($content -notmatch '<Version>.*?</Version>') {
             $content = $content -replace '</PropertyGroup>', "$versionTag`n</PropertyGroup>"
           } else {
             $content = $content -replace '<Version>.*?</Version>', $versionTag
           }
+
           Set-Content $projFile.FullName $content -Encoding UTF8
           Get-Content $projFile.FullName | Select-String "<Version>"
 
@@ -77,6 +79,12 @@ jobs:
           Invoke-WebRequest -Uri https://github.com/wixtoolset/wix/releases/download/v6.0.0/wix-cli-x64.msi -OutFile wix6.msi
           Start-Process wix6.msi -ArgumentList "/quiet" -Wait
           Remove-Item wix6.msi
+
+      - name: Add WiX Toolset to PATH
+        shell: pwsh
+        run: |
+          echo "Adding WiX Toolset to PATH"
+          $env:PATH = "$env:PATH;C:\Program Files\WiX Toolset v6.0\bin\x64"
 
       - name: Generate Files.wxs excluding 'publish' folder
         shell: pwsh
@@ -119,9 +127,17 @@ jobs:
           tag_name: v${{ env.SAFE_VERSION }}
           body: |
             ## 🧹 DeepCleaner v${{ env.SAFE_VERSION }}
-            - Single-file EXE
-            - MSI installer
-            Improvements and fixes. Issues: https://github.com/${{ github.repository }}/issues
+            
+            ### 📦 What's Included
+            - Portable Executable (single-file)
+            - MSI Installer
+            
+            ### 🚀 Installation
+            - Download `DeepCleaner-${{ env.SAFE_VERSION }}.msi` and run it
+            - Or use the portable `.exe`
+            
+            ### 📝 Notes
+            Improvements and bug fixes. Report issues here: https://github.com/${{ github.repository }}/issues
           files: |
             bin/Release/net8.0-windows/win-x64/publish/*.exe
             publish/DeepCleaner-${{ env.SAFE_VERSION }}.msi
@@ -145,23 +161,26 @@ jobs:
             Write-Host "✅ Committed and pushed updated .csproj version: $safeVersion"
           }
 
-      # WinGet manifests (only for stable versions; skip prerelease)
       - name: Create WinGet Manifest
         if: ${{ !contains(steps.gitversion.outputs.FullSemVer, '-') }}
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
+      
           $version = "${{ env.SAFE_VERSION }}"
           $repo = "${{ github.repository }}"
           $repoUrl = "https://github.com/$repo"
+      
           $msiName = "DeepCleaner-$version.msi"
           $msiPath = "publish/$msiName"
           if (-not (Test-Path $msiPath)) { throw "MSI not found at $msiPath" }
+      
           $msiUrl = "$repoUrl/releases/download/v$version/$msiName"
           $hash = (Get-FileHash -Path $msiPath -Algorithm SHA256).Hash
-
+      
           function Get-MsiProperty {
-            param([Parameter(Mandatory)][string]$Path,[Parameter(Mandatory)][string]$Property)
+            param([Parameter(Mandatory)][string]$Path,
+                  [Parameter(Mandatory)][string]$Property)
             $installer = New-Object -ComObject WindowsInstaller.Installer
             $database  = $installer.GetType().InvokeMember("OpenDatabase","InvokeMethod",$null,$installer,@($Path,0))
             $view = $database.OpenView("SELECT `Value` FROM `Property` WHERE `Property` = '$Property'")
@@ -173,89 +192,85 @@ jobs:
             $installer = $null
             return $value
           }
-
+      
           $productCode    = Get-MsiProperty -Path $msiPath -Property "ProductCode"
           $productVersion = Get-MsiProperty -Path $msiPath -Property "ProductVersion"
           if (-not $productCode) { throw "Failed to read ProductCode from $msiPath" }
           if ($productVersion -and $productVersion -ne $version) {
             Write-Host "⚠️ MSI ProductVersion '$productVersion' != release version '$version'"
           }
-
+      
           New-Item -ItemType Directory -Force -Path "winget" | Out-Null
-
+      
           $versionManifest = @"
-PackageIdentifier: SubrotoSaha.DeepCleaner
-PackageVersion: $version
-DefaultLocale: en-US
-ManifestType: version
-ManifestVersion: 1.6.0
-"@
-
+      PackageIdentifier: SubrotoSaha.DeepCleaner
+      PackageVersion: $version
+      DefaultLocale: en-US
+      ManifestType: version
+      ManifestVersion: 1.6.0
+      "@
+      
           $localeManifest = @"
-PackageIdentifier: SubrotoSaha.DeepCleaner
-PackageVersion: $version
-PackageLocale: en-US
-Publisher: Subroto Saha
-PublisherUrl: $repoUrl
-PublisherSupportUrl: $repoUrl/issues
-Author: Subroto Saha
-PackageName: DeepCleaner
-PackageUrl: $repoUrl
-License: MIT
-LicenseUrl: $repoUrl/blob/main/LICENSE
-Copyright: Copyright (c) 2025 Subroto Saha
-ShortDescription: A powerful Windows temporary files cleaner.
-Description: DeepCleaner is a professional Windows utility that helps you clean temporary files, system cache, and free up disk space. Features include safe cleaning algorithms, detailed scan reports, and scheduled cleaning options.
-Moniker: deepcleaner
-Tags:
-  - cleaner
-  - temp-files
-  - disk-cleanup
-  - system-utility
-  - windows
-  - maintenance
-ReleaseNotes: |
-  Improvements and bug fixes.
-  Changelog: $repoUrl/releases/tag/v$version
-ReleaseNotesUrl: $repoUrl/releases/tag/v$version
-ManifestType: defaultLocale
-ManifestVersion: 1.6.0
-"@
-
+      PackageIdentifier: SubrotoSaha.DeepCleaner
+      PackageVersion: $version
+      PackageLocale: en-US
+      Publisher: Subroto Saha
+      PublisherUrl: $repoUrl
+      PublisherSupportUrl: $repoUrl/issues
+      Author: Subroto Saha
+      PackageName: DeepCleaner
+      PackageUrl: $repoUrl
+      License: MIT
+      LicenseUrl: $repoUrl/blob/main/LICENSE
+      Copyright: Copyright (c) 2025 Subroto Saha
+      ShortDescription: A powerful Windows temporary files cleaner.
+      Description: DeepCleaner is a professional Windows utility that helps you clean temporary files, system cache, and free up disk space. Features include safe cleaning algorithms, detailed scan reports, and scheduled cleaning options.
+      Moniker: deepcleaner
+      Tags:
+        - cleaner
+        - temp-files
+        - disk-cleanup
+        - system-utility
+        - windows
+        - maintenance
+      ReleaseNotes: |
+        This release includes improvements and bug fixes.
+        For detailed changelog, visit: $repoUrl/releases/tag/v$version
+      ReleaseNotesUrl: $repoUrl/releases/tag/v$version
+      ManifestType: defaultLocale
+      ManifestVersion: 1.6.0
+      "@
+      
           $installerManifest = @"
-PackageIdentifier: SubrotoSaha.DeepCleaner
-PackageVersion: $version
-Platform:
-  - Windows.Desktop
-MinimumOSVersion: 10.0.0.0
-InstallModes:
-  - interactive
-  - silent
-  - silentWithProgress
-UpgradeBehavior: install
-Installers:
-  - Architecture: x64
-    InstallerType: msi
-    InstallerUrl: $msiUrl
-    InstallerSha256: $hash
-    ProductCode: '$productCode'
-    Scope: machine
-    InstallerSwitches:
-      Silent: /qn /norestart
-      SilentWithProgress: /qb! /norestart
-ManifestType: installer
-ManifestVersion: 1.6.0
-"@
-
+      PackageIdentifier: SubrotoSaha.DeepCleaner
+      PackageVersion: $version
+      Platform:
+        - Windows.Desktop
+      MinimumOSVersion: 10.0.0.0
+      InstallModes:
+        - interactive
+        - silent
+        - silentWithProgress
+      UpgradeBehavior: install
+      Installers:
+        - Architecture: x64
+          InstallerType: msi
+          InstallerUrl: $msiUrl
+          InstallerSha256: $hash
+          ProductCode: '$productCode'
+          Scope: machine
+          InstallerSwitches:
+            Silent: /qn /norestart
+            SilentWithProgress: /qb! /norestart
+      ManifestType: installer
+      ManifestVersion: 1.6.0
+      "@
+      
           $versionManifest   | Set-Content -Path "winget/SubrotoSaha.DeepCleaner.yaml" -Encoding UTF8
           $localeManifest    | Set-Content -Path "winget/SubrotoSaha.DeepCleaner.locale.en-US.yaml" -Encoding UTF8
           $installerManifest | Set-Content -Path "winget/SubrotoSaha.DeepCleaner.installer.yaml" -Encoding UTF8
-
+      
           Write-Host "✅ WinGet manifests created"
-          Write-Host "MSI URL:  $msiUrl"
-          Write-Host "SHA256:   $hash"
-          Write-Host "ProductCode: $productCode"
-          Write-Host "ProductVersion: $productVersion"
 
       - name: Upload WinGet Manifests as Artifacts
         if: ${{ !contains(steps.gitversion.outputs.FullSemVer, '-') }}
