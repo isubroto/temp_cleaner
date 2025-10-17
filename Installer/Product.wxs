@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
 
-  <Package Name="Temp Cleaner"
+  <Package Name="DeepCleaner"
            Manufacturer="Subroto Saha"
            Version="$(var.ProductVersion)"
            UpgradeCode="8ed2b67f-6148-4943-97a2-49d4c7a7dfec"
@@ -11,7 +11,7 @@
     <!-- Directories -->
     <StandardDirectory Id="ProgramFiles64Folder">
       <Directory Id="subroto" Name="Subroto Saha">
-        <Directory Id="INSTALLFOLDER" Name="Temp Cleaner UI" />
+        <Directory Id="INSTALLFOLDER" Name="DeepCleaner" />
       </Directory>
     </StandardDirectory>
 
@@ -25,13 +25,13 @@
 
     <!-- Components -->
     <Component Id="MainExecutable" Directory="INSTALLFOLDER" Guid="*">
-      <File Source="..\bin\Release\net8.0-windows\win-x64\TempCleaner.exe" />
+      <File Source="..\bin\Release\net8.0-windows\win-x64\DeepCleaner.exe" />
     </Component>
 
     <Component Id="DesktopShortcut" Directory="DesktopShortcutDir" Guid="*">
       <Shortcut Id="DesktopAppShortcut"
-                Name="Temp Cleaner"
-                Target="[INSTALLFOLDER]TempCleaner.exe"
+                Name="DeepCleaner"
+                Target="[INSTALLFOLDER]DeepCleaner.exe"
                 Icon="AppIcon"
                 WorkingDirectory="INSTALLFOLDER" />
       <RemoveFolder Id="RemoveDesktop" On="uninstall"/>
@@ -40,8 +40,8 @@
 
     <Component Id="StartMenuShortcut" Directory="ProgramMenuDir" Guid="*">
       <Shortcut Id="StartMenuAppShortcut"
-                Name="Temp Cleaner"
-                Target="[INSTALLFOLDER]TempCleaner.exe"
+                Name="DeepCleaner"
+                Target="[INSTALLFOLDER]DeepCleaner.exe"
                 Icon="AppIcon"
                 WorkingDirectory="INSTALLFOLDER" />
       <RemoveFolder Id="RemoveStartMenu" On="uninstall"/>
