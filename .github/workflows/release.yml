@@ -125,7 +125,7 @@ jobs:
             -arch x64 `
             -define ProductVersion=$msiVersion `
             -define SourceDir="..\bin\Release\net8.0-windows\win-x64" `
-            -out "../publish/Temp_Cleaner-$safeVersion.msi"
+            -out "../publish/DeepCleaner-$safeVersion.msi"
 
       - name: Upload Release Artifacts
         uses: softprops/action-gh-release@v2
@@ -140,14 +140,14 @@ jobs:
             - MSI Installer
             
             ### 🚀 Installation
-            - Download `Temp_Cleaner-${{ steps.versions.outputs.safe }}.msi` and run it
+            - Download `DeepCleaner-${{ steps.versions.outputs.safe }}.msi` and run it
             - Or use the portable `.exe`
             
             ### 📝 Notes
             Improvements and bug fixes. Report issues here: https://github.com/${{ github.repository }}/issues
           files: |
             bin/Release/net8.0-windows/win-x64/publish/*.exe
-            publish/Temp_Cleaner-${{ steps.versions.outputs.safe }}.msi
+            publish/DeepCleaner-${{ steps.versions.outputs.safe }}.msi
           draft: false
           prerelease: ${{ contains(steps.gitversion.outputs.FullSemVer, '-') }}
           generate_release_notes: true
@@ -181,7 +181,7 @@ jobs:
           $repo = "${{ github.repository }}"
           $repoUrl = "https://github.com/$repo"
 
-          $msiName = "Temp_Cleaner-$version.msi"
+          $msiName = "DeepCleaner-$version.msi"
           $msiPath = "publish\$msiName"
           if (-not (Test-Path $msiPath)) { throw "MSI not found at $msiPath" }
 
@@ -302,11 +302,17 @@ jobs:
       - name: Validate WinGet manifests
         if: ${{ !contains(steps.gitversion.outputs.FullSemVer, '-') }}
         shell: pwsh
-        run: .\wingetcreate.exe validate --manifest winget
+        run: |
+             if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+              Write-Host "winget CLI not found on this runner; skipping validation."
+              exit 0
+              }
+              winget --info
+              winget validate --manifest winget
 
       - name: Submit to WinGet
         if: ${{ !contains(steps.gitversion.outputs.FullSemVer, '-') }}
         env:
           WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
         shell: pwsh
-        run: .\wingetcreate.exe submit winget -t "$env:WINGET_TOKEN" --prtitle "Add SubrotoSaha.DeepCleaner v${{ steps.versions.outputs.safe }}"
+        run: .\wingetcreate.exe submit --prtitle "Add SubrotoSaha.DeepCleaner v${{ steps.versions.outputs.safe }}" --token "$env:WINGET_TOKEN" winget
