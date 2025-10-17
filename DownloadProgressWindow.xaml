@@ -1,0 +1,210 @@
+<Window x:Class="TempCleaner.DownloadProgressWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="DeepCleaner Pro - Update Download" Height="300" Width="500"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen"
+        Background="Transparent"
+        AllowsTransparency="True">
+
+    <Window.Resources>
+        <!-- Deep Sea Abyss Color Palette -->
+        <SolidColorBrush x:Key="AbyssPrimary" Color="#0B1426"/>
+        <SolidColorBrush x:Key="AbyssSecondary" Color="#1A2332"/>
+        <SolidColorBrush x:Key="AbyssSurface" Color="#243447"/>
+        <SolidColorBrush x:Key="AbyssCard" Color="#2F4562"/>
+        
+        <!-- Bioluminescent Accents -->
+        <SolidColorBrush x:Key="BioTeal" Color="#00D4AA"/>
+        <SolidColorBrush x:Key="BioBlue" Color="#0099FF"/>
+        <SolidColorBrush x:Key="BioCyan" Color="#00E5FF"/>
+        
+        <!-- Text Colors -->
+        <SolidColorBrush x:Key="TextPrimary" Color="#E8F4FD"/>
+        <SolidColorBrush x:Key="TextSecondary" Color="#B3D9F2"/>
+        <SolidColorBrush x:Key="TextMuted" Color="#7BA7CC"/>
+        
+        <!-- Gradients -->
+        <LinearGradientBrush x:Key="AbyssGradient" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#0B1426" Offset="0"/>
+            <GradientStop Color="#1A2332" Offset="0.5"/>
+            <GradientStop Color="#243447" Offset="1"/>
+        </LinearGradientBrush>
+        
+        <LinearGradientBrush x:Key="BioGradient" StartPoint="0,0" EndPoint="1,0">
+            <GradientStop Color="#00D4AA" Offset="0"/>
+            <GradientStop Color="#0099FF" Offset="0.5"/>
+            <GradientStop Color="#00E5FF" Offset="1"/>
+        </LinearGradientBrush>
+
+        <!-- Button Style -->
+        <Style x:Key="AbyssButton" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource BioGradient}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="FontFamily" Value="Segoe UI Variable, Inter, Segoe UI"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="8" 
+                                Padding="{TemplateBinding Padding}">
+                            <Border.Effect>
+                                <DropShadowEffect Color="#00D4AA" Direction="270" ShadowDepth="0" Opacity="0.4" BlurRadius="8"/>
+                            </Border.Effect>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <!-- Main Container -->
+    <Border CornerRadius="16" 
+            Background="{StaticResource AbyssGradient}" 
+            BorderBrush="{StaticResource BioTeal}" 
+            BorderThickness="2">
+        <Border.Effect>
+            <DropShadowEffect Color="#00D4AA" Direction="270" ShadowDepth="0" Opacity="0.3" BlurRadius="20"/>
+        </Border.Effect>
+
+        <Grid Margin="30">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <StackPanel Grid.Row="0" Margin="0,0,0,20">
+                <TextBlock Text="DeepCleaner Update" 
+                           Foreground="{StaticResource TextPrimary}" 
+                           FontSize="20" 
+                           FontWeight="Bold"
+                           HorizontalAlignment="Center"
+                           FontFamily="Segoe UI Variable, Inter, Segoe UI"/>
+                <TextBlock x:Name="StatusText"
+                           Text="Preparing to download update..." 
+                           Foreground="{StaticResource TextSecondary}" 
+                           FontSize="12" 
+                           HorizontalAlignment="Center"
+                           FontFamily="Segoe UI Variable, Inter, Segoe UI"
+                           Margin="0,5,0,0"/>
+            </StackPanel>
+
+            <!-- Progress Section -->
+            <StackPanel Grid.Row="1" VerticalAlignment="Center">
+                <!-- Progress Info -->
+                <Grid Margin="0,0,0,15">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <TextBlock x:Name="FileNameText"
+                               Text="DeepCleaner_Pro_Setup.msi" 
+                               Foreground="{StaticResource TextPrimary}" 
+                               FontSize="14" 
+                               FontWeight="Medium"
+                               VerticalAlignment="Center"/>
+                    
+                    <TextBlock x:Name="ProgressText"
+                               Grid.Column="1"
+                               Text="0%" 
+                               Foreground="{StaticResource BioTeal}" 
+                               FontSize="14" 
+                               FontWeight="Bold"/>
+                </Grid>
+
+                <!-- Progress Bar -->
+                <Border Background="{StaticResource AbyssSurface}" 
+                        CornerRadius="10"
+                        BorderBrush="{StaticResource BioTeal}"
+                        BorderThickness="1"
+                        Height="20"
+                        Margin="0,0,0,15">
+                    <Border CornerRadius="9" Margin="1" ClipToBounds="True">
+                        <Border x:Name="ProgressFill" 
+                                Background="{StaticResource BioGradient}"
+                                CornerRadius="8"
+                                HorizontalAlignment="Left"
+                                Width="0">
+                            <Border.Effect>
+                                <DropShadowEffect Color="#00D4AA" Direction="0" ShadowDepth="0" Opacity="0.8" BlurRadius="8"/>
+                            </Border.Effect>
+                        </Border>
+                    </Border>
+                </Border>
+
+                <!-- Download Stats -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Downloaded" 
+                                   Foreground="{StaticResource TextMuted}" 
+                                   FontSize="10" 
+                                   HorizontalAlignment="Center"/>
+                        <TextBlock x:Name="DownloadedText"
+                                   Text="0 MB" 
+                                   Foreground="{StaticResource TextPrimary}" 
+                                   FontSize="12" 
+                                   FontWeight="Medium"
+                                   HorizontalAlignment="Center"/>
+                    </StackPanel>
+                    
+                    <StackPanel Grid.Column="1">
+                        <TextBlock Text="Total Size" 
+                                   Foreground="{StaticResource TextMuted}" 
+                                   FontSize="10" 
+                                   HorizontalAlignment="Center"/>
+                        <TextBlock x:Name="TotalSizeText"
+                                   Text="-- MB" 
+                                   Foreground="{StaticResource TextPrimary}" 
+                                   FontSize="12" 
+                                   FontWeight="Medium"
+                                   HorizontalAlignment="Center"/>
+                    </StackPanel>
+                    
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Speed" 
+                                   Foreground="{StaticResource TextMuted}" 
+                                   FontSize="10" 
+                                   HorizontalAlignment="Center"/>
+                        <TextBlock x:Name="SpeedText"
+                                   Text="-- KB/s" 
+                                   Foreground="{StaticResource TextPrimary}" 
+                                   FontSize="12" 
+                                   FontWeight="Medium"
+                                   HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+
+            <!-- Buttons -->
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
+                <Button x:Name="CancelButton"
+                        Content="Cancel" 
+                        Style="{StaticResource AbyssButton}"
+                        Margin="0,0,10,0"
+                        Click="CancelButton_Click"/>
+                
+                <Button x:Name="InstallButton"
+                        Content="Install Now" 
+                        Style="{StaticResource AbyssButton}"
+                        Visibility="Collapsed"
+                        Click="InstallButton_Click"/>
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>
