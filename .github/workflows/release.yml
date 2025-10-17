@@ -121,10 +121,10 @@ jobs:
       - name: Upload Release Artifacts
         uses: softprops/action-gh-release@v2
         with:
-          name: "TempCleaner v${{ env.SAFE_VERSION }}"
+          name: "DeepCleaner v${{ env.SAFE_VERSION }}"
           tag_name: v${{ env.SAFE_VERSION }}
           body: |
-            ## 🧹 TempCleaner v${{ env.SAFE_VERSION }}
+            ## 🧹 DeepCleaner v${{ env.SAFE_VERSION }}
             
             ### 📦 What's Included
             - **Portable Executable**: Ready-to-run single-file application
@@ -213,7 +213,7 @@ jobs:
           
           # Create version manifest
           $versionManifest = @"
-          PackageIdentifier: SubrotoSaha.TempCleaner
+          PackageIdentifier: SubrotoSaha.DeepCleaner
           PackageVersion: $version
           DefaultLocale: en-US
           ManifestType: version
@@ -222,21 +222,21 @@ jobs:
           
           # Create default locale manifest
           $localeManifest = @"
-          PackageIdentifier: SubrotoSaha.TempCleaner
+          PackageIdentifier: SubrotoSaha.DeepCleaner
           PackageVersion: $version
           PackageLocale: en-US
           Publisher: Subroto Saha
           PublisherUrl: $repoUrl
           PublisherSupportUrl: $repoUrl/issues
           Author: Subroto Saha
-          PackageName: TempCleaner
+          PackageName: DeepCleaner
           PackageUrl: $repoUrl
           License: MIT
           LicenseUrl: $repoUrl/blob/main/LICENSE
           Copyright: Copyright (c) 2025 Subroto Saha
           ShortDescription: A powerful Windows temporary files cleaner
-          Description: TempCleaner is a professional Windows utility that helps you clean temporary files, system cache, and free up disk space. Features include safe cleaning algorithms, detailed scan reports, and scheduled cleaning options.
-          Moniker: tempcleaner
+          Description: DeepCleaner is a professional Windows utility that helps you clean temporary files, system cache, and free up disk space. Features include safe cleaning algorithms, detailed scan reports, and scheduled cleaning options.
+          Moniker: DeepCleaner
           Tags:
           - cleaner
           - temp-files
@@ -254,7 +254,7 @@ jobs:
           
           # Create installer manifest (we'll get ProductCode later)
           $installerManifest = @"
-          PackageIdentifier: SubrotoSaha.TempCleaner
+          PackageIdentifier: SubrotoSaha.DeepCleaner
           PackageVersion: $version
           Platform:
           - Windows.Desktop
@@ -280,9 +280,9 @@ jobs:
           "@
           
           # Write manifests to files
-          $versionManifest | Out-File -FilePath "winget/SubrotoSaha.TempCleaner.yaml" -Encoding UTF8
-          $localeManifest | Out-File -FilePath "winget/SubrotoSaha.TempCleaner.locale.en-US.yaml" -Encoding UTF8
-          $installerManifest | Out-File -FilePath "winget/SubrotoSaha.TempCleaner.installer.yaml" -Encoding UTF8
+          $versionManifest | Out-File -FilePath "winget/SubrotoSaha.DeepCleaner.yaml" -Encoding UTF8
+          $localeManifest | Out-File -FilePath "winget/SubrotoSaha.DeepCleaner.locale.en-US.yaml" -Encoding UTF8
+          $installerManifest | Out-File -FilePath "winget/SubrotoSaha.DeepCleaner.installer.yaml" -Encoding UTF8
           
           Write-Host "✅ WinGet manifests created successfully"
 
