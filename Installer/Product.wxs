@@ -20,7 +20,7 @@
     </StandardDirectory>
 
     <StandardDirectory Id="ProgramMenuFolder">
-      <Directory Id="ProgramMenuDir" Name="Temp Cleaner" />
+      <Directory Id="ProgramMenuDir" Name="DeepCleaner" />
     </StandardDirectory>
 
     <!-- Components -->
@@ -35,7 +35,7 @@
                 Icon="AppIcon"
                 WorkingDirectory="INSTALLFOLDER" />
       <RemoveFolder Id="RemoveDesktop" On="uninstall"/>
-      <RegistryValue Root="HKCU" Key="Software\Temp Cleaner\UI" Name="installed" Type="integer" Value="1" KeyPath="yes"/>
+      <RegistryValue Root="HKCU" Key="Software\DeepCleaner\UI" Name="installed" Type="integer" Value="1" KeyPath="yes"/>
     </Component>
 
     <Component Id="StartMenuShortcut" Directory="ProgramMenuDir" Guid="*">
@@ -45,7 +45,7 @@
                 Icon="AppIcon"
                 WorkingDirectory="INSTALLFOLDER" />
       <RemoveFolder Id="RemoveStartMenu" On="uninstall"/>
-      <RegistryValue Root="HKCU" Key="Software\Temp Cleaner" Name="startMenu" Type="integer" Value="1" KeyPath="yes"/>
+      <RegistryValue Root="HKCU" Key="Software\DeepCleaner" Name="startMenu" Type="integer" Value="1" KeyPath="yes"/>
     </Component>
 
     <!-- Icon -->
