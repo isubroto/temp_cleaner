@@ -3,19 +3,26 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+
+    <!-- 👇 ADD/MODIFY THESE LINES FOR THE NEW NAME 👇 -->
+    <AssemblyName>DeepCleaner</AssemblyName>
+    <RootNamespace>NewApp</RootNamespace>
+    <Product>New DeepCleaner Pro</Product> <!-- This is the "Product Name" in file properties -->
+    <Company>Subroto</Company> <!-- Optional: Set your company name -->
+    
     <ApplicationIcon>Images\Designer.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <Version>0.1.31.2</Version>
-
   </PropertyGroup>
 
+  <!-- ... The rest of your file stays the same ... -->
+  
   <ItemGroup>
     <None Remove="appsettings.json" />
   </ItemGroup>
@@ -31,9 +38,5 @@
     <Resource Include="Images\Designer.png" />
     <Resource Include="Images\Designer.ico" />
   </ItemGroup>
+
 </Project>
-
-
-
-
-
