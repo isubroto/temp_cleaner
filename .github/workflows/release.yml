@@ -1,10 +1,3 @@
-Here you go — a ready-to-paste workflow that builds your WPF app, creates the MSI, makes a GitHub Release, generates WinGet manifests, validates them, and submits a PR to winget-pkgs.
-
-Notes before you paste:
-- Create repo secret: WINGET_TOKEN (GitHub PAT with public_repo scope).
-- WinGet steps run only for stable versions (no “-pre” in version).
-
-```yaml
 name: Release WPF App with MSI
 
 on:
@@ -318,8 +311,3 @@ jobs:
           WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
         shell: pwsh
         run: wingetcreate submit winget -t "$env:WINGET_TOKEN" --prtitle "Add SubrotoSaha.DeepCleaner v${{ env.SAFE_VERSION }}"
-```
-
-If your MSI asset name or folder differs, change:
-- publish/DeepCleaner-${{ env.SAFE_VERSION }}.msi
-- The MSI URL builder in the WinGet step.
