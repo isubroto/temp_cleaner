@@ -78,7 +78,6 @@ namespace TempCleaner
             }
             catch (Exception ex)
             {
-
             }
 
             // Get all directories with read/write access

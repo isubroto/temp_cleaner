@@ -2,12 +2,14 @@
 {
     public class AppSettings
     {
-        public GitHubSettings GitHub { get; set; }
+        public GitHubSettings GitHub { get; set; } = new GitHubSettings();
     }
 
     public class GitHubSettings
     {
-        public string Token { get; set; }
+        public string Token { get; set; } = string.Empty;
+        public string Owner { get; set; } = string.Empty;
+        public string Repo { get; set; } = string.Empty;
     }
 
     public class GetInformations

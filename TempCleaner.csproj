@@ -22,16 +22,7 @@
   </PropertyGroup>
 
   <!-- ... The rest of your file stays the same ... -->
-  
-  <ItemGroup>
-    <None Remove="appsettings.json" />
-  </ItemGroup>
 
-  <ItemGroup>
-    <Content Include="appsettings.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Images\" />
@@ -40,7 +31,3 @@
   </ItemGroup>
 
 </Project>
-
-
-
-

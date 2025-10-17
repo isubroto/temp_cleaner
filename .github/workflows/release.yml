@@ -17,6 +17,9 @@ concurrency:
 
 env:
   project: ./TempCleaner.csproj
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GITHUB_OWNER: ${{ github.repository_owner }}
+  GITHUB_REPO: ${{ github.event.repository.name }}
 
 jobs:
   release:
@@ -134,15 +137,15 @@ jobs:
           tag_name: v${{ steps.versions.outputs.safe }}
           body: |
             ## 🧹 DeepCleaner v${{ steps.versions.outputs.safe }}
-            
+
             ### 📦 What's Included
             - Portable Executable (single-file)
             - MSI Installer
-            
+
             ### 🚀 Installation
             - Download `DeepCleaner-${{ steps.versions.outputs.safe }}.msi` and run it
             - Or use the portable `.exe`
-            
+
             ### 📝 Notes
             Improvements and bug fixes. Report issues here: https://github.com/${{ github.repository }}/issues
           files: |
@@ -303,12 +306,12 @@ jobs:
         if: ${{ !contains(steps.gitversion.outputs.FullSemVer, '-') }}
         shell: pwsh
         run: |
-             if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
-              Write-Host "winget CLI not found on this runner; skipping validation."
-              exit 0
-              }
-              winget --info
-              winget validate --manifest winget
+          if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+           Write-Host "winget CLI not found on this runner; skipping validation."
+           exit 0
+           }
+           winget --info
+           winget validate --manifest winget
 
       - name: Submit to WinGet
         if: ${{ !contains(steps.gitversion.outputs.FullSemVer, '-') }}

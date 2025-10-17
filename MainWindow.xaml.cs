@@ -47,10 +47,72 @@ namespace TempCleaner
             var latest = await GitHubUpdater.GetLatestReleaseVersionAsync("isubroto", "temp_cleaner", token);
             return latest; // Ensure this method returns a string
         }
+
+        // Get environment variable by key. If not set in process environment, fallback to .env file.
+        private static string GetEnv(string key)
+        {
+            if (string.IsNullOrWhiteSpace(key)) return string.Empty;
+
+            var val = Environment.GetEnvironmentVariable(key);
+            if (!string.IsNullOrEmpty(val)) return val;
+
+            // Fallback: try to read from a .env file in app base directory or current directory
+            try
+            {
+                // Prefer app base directory (where the exe resides), then current working directory
+                var candidates = new List<string>
+                {
+                    System.IO.Path.Combine(AppContext.BaseDirectory, ".env"),
+                    System.IO.Path.Combine(Directory.GetCurrentDirectory(), ".env"),
+                };
+
+                foreach (var envPath in candidates.Distinct())
+                {
+                    if (!File.Exists(envPath)) continue;
+                    foreach (var rawLine in File.ReadLines(envPath))
+                    {
+                        var line = rawLine.Trim();
+                        if (line.Length == 0 || line.StartsWith("#")) continue; // skip comments/empty
+                        if (line.StartsWith("export ", StringComparison.OrdinalIgnoreCase))
+                        {
+                            line = line.Substring(7).Trim();
+                        }
+
+                        int sep = line.IndexOf('=');
+                        if (sep <= 0) continue;
+                        var k = line.Substring(0, sep).Trim();
+                        if (!k.Equals(key, StringComparison.Ordinal)) continue;
+
+                        var v = line.Substring(sep + 1).Trim();
+                        // Strip surrounding quotes if present
+                        if (v.Length >= 2 && ((v.StartsWith("\"") && v.EndsWith("\"")) || (v.StartsWith("'") && v.EndsWith("'"))))
+                        {
+                            v = v.Substring(1, v.Length - 2);
+                        }
+                        return v;
+                    }
+                }
+            }
+            catch
+            {
+                // Ignore any .env parsing errors and return empty
+            }
+
+            return string.Empty;
+        }
         public static AppSettings LoadSettings()
         {
-            var json = File.ReadAllText("./appsettings.json");
-            var settings = JsonSerializer.Deserialize<AppSettings>(json);
+            var settings = new AppSettings();
+
+            var token = GetEnv("GITHUB_TOKEN");
+            if (!string.IsNullOrWhiteSpace(token)) settings.GitHub.Token = token;
+
+            var owner = GetEnv("GITHUB_OWNER");
+            if (!string.IsNullOrWhiteSpace(owner)) settings.GitHub.Owner = owner;
+
+            var repo = GetEnv("GITHUB_REPO");
+            if (!string.IsNullOrWhiteSpace(repo)) settings.GitHub.Repo = repo;
+
             return settings;
         }
 
