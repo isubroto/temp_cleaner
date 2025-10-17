@@ -45,14 +45,24 @@ jobs:
         id: gitversion
         uses: gittools/actions/gitversion/execute@v0.11.0
 
+      - name: Compute versions
+        id: versions
+        shell: pwsh
+        run: |
+          $full = '${{ steps.gitversion.outputs.FullSemVer }}'
+          $safe = $full -replace '\+', '.'
+          $msi  = '${{ steps.gitversion.outputs.MajorMinorPatch }}' # 3-part for MSI
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "full=$full"
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "safe=$safe"
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "msi=$msi"
+
       - name: Update .csproj Version
         shell: pwsh
         run: |
-          $projFile = Get-ChildItem -Recurse -Filter *.csproj | Select-Object -First 1
+          $projFile = Get-Item $env:project
           Write-Host "Updating version in: $($projFile.FullName)"
-          $version = "${{ steps.gitversion.outputs.FullSemVer }}"
-          $safeVersion = $version -replace '\+', '.'
-          $versionTag = "<Version>$safeVersion</Version>"
+          $version = '${{ steps.versions.outputs.safe }}'
+          $versionTag = "<Version>$version</Version>"
 
           $content = Get-Content $projFile.FullName -Raw
           if ($content -notmatch '<Version>.*?</Version>') {
@@ -64,12 +74,15 @@ jobs:
           Get-Content $projFile.FullName | Select-String "<Version>"
 
       - name: Restore Dependencies
+        shell: pwsh
         run: dotnet restore ${{ env.project }} -r win-x64
 
       - name: Build WPF App
+        shell: pwsh
         run: dotnet build ${{ env.project }} -c Release --no-restore
 
       - name: Publish WPF App
+        shell: pwsh
         run: dotnet publish ${{ env.project }} -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true --no-build
 
       - name: Install WiX Toolset
@@ -103,37 +116,38 @@ jobs:
         working-directory: Installer
         shell: pwsh
         run: |
-          $version = "${{ steps.gitversion.outputs.FullSemVer }}"
-          $safeVersion = $version -replace '\+', '.'
+          $safeVersion = '${{ steps.versions.outputs.safe }}'   # for file names/tags
+          $msiVersion  = '${{ steps.versions.outputs.msi }}'    # 3-part numeric for MSI
+
           "SAFE_VERSION=$safeVersion" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
           & "C:\Program Files\WiX Toolset v6.0\bin\wix.exe" build Product.wxs Files.wxs `
             -arch x64 `
-            -define ProductVersion=$safeVersion `
+            -define ProductVersion=$msiVersion `
             -define SourceDir="..\bin\Release\net8.0-windows\win-x64" `
-            -out "../publish/DeepCleaner-$safeVersion.msi"
+            -out "../publish/Temp_Cleaner-$safeVersion.msi"
 
       - name: Upload Release Artifacts
         uses: softprops/action-gh-release@v2
         with:
-          name: "DeepCleaner v${{ env.SAFE_VERSION }}"
-          tag_name: v${{ env.SAFE_VERSION }}
+          name: "DeepCleaner v${{ steps.versions.outputs.safe }}"
+          tag_name: v${{ steps.versions.outputs.safe }}
           body: |
-            ## 🧹 DeepCleaner v${{ env.SAFE_VERSION }}
+            ## 🧹 DeepCleaner v${{ steps.versions.outputs.safe }}
             
             ### 📦 What's Included
             - Portable Executable (single-file)
             - MSI Installer
             
             ### 🚀 Installation
-            - Download `DeepCleaner-${{ env.SAFE_VERSION }}.msi` and run it
+            - Download `Temp_Cleaner-${{ steps.versions.outputs.safe }}.msi` and run it
             - Or use the portable `.exe`
             
             ### 📝 Notes
             Improvements and bug fixes. Report issues here: https://github.com/${{ github.repository }}/issues
           files: |
             bin/Release/net8.0-windows/win-x64/publish/*.exe
-            publish/DeepCleaner-${{ env.SAFE_VERSION }}.msi
+            publish/Temp_Cleaner-${{ steps.versions.outputs.safe }}.msi
           draft: false
           prerelease: ${{ contains(steps.gitversion.outputs.FullSemVer, '-') }}
           generate_release_notes: true
@@ -147,8 +161,7 @@ jobs:
           if (git diff --cached --quiet) {
             Write-Host "🟢 No changes to commit. Version already up to date."
           } else {
-            $version = "${{ steps.gitversion.outputs.FullSemVer }}"
-            $safeVersion = $version -replace '\+', '.'
+            $safeVersion = '${{ steps.versions.outputs.safe }}'
             git commit -m "🔖 Bump version to $safeVersion"
             git push origin HEAD
             Write-Host "✅ Committed and pushed updated .csproj version: $safeVersion"
@@ -156,23 +169,31 @@ jobs:
 
       # -----------------------------
       # WinGet: Create manifests, validate, submit
+      # Only for stable releases (no '-' in version)
       # -----------------------------
-      - name: Create WinGet Manifest
+      - name: Create WinGet Manifests
         if: ${{ !contains(steps.gitversion.outputs.FullSemVer, '-') }}
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          $version = "${{ env.SAFE_VERSION }}" # e.g., 0.1.31.2 (no leading 'v')
+
+          $version = '${{ steps.versions.outputs.safe }}'   # e.g., 0.1.31
           $repo = "${{ github.repository }}"
           $repoUrl = "https://github.com/$repo"
-          $msiName = "DeepCleaner-$version.msi"
-          $msiPath = "publish/$msiName"
+
+          $msiName = "Temp_Cleaner-$version.msi"
+          $msiPath = "publish\$msiName"
           if (-not (Test-Path $msiPath)) { throw "MSI not found at $msiPath" }
+
           $msiUrl = "$repoUrl/releases/download/v$version/$msiName"
+
+          # Hash
           $hash = (Get-FileHash -Path $msiPath -Algorithm SHA256).Hash
 
+          # Read MSI properties (ProductCode)
           function Get-MsiProperty {
-            param([Parameter(Mandatory)][string]$Path,[Parameter(Mandatory)][string]$Property)
+            param([Parameter(Mandatory)][string]$Path,
+                  [Parameter(Mandatory)][string]$Property)
             $installer = New-Object -ComObject WindowsInstaller.Installer
             $database  = $installer.GetType().InvokeMember("OpenDatabase","InvokeMethod",$null,$installer,@($Path,0))
             $view = $database.OpenView("SELECT `Value` FROM `Property` WHERE `Property` = '$Property'")
@@ -185,109 +206,107 @@ jobs:
             return $value
           }
 
-          $productCode    = Get-MsiProperty -Path $msiPath -Property "ProductCode"
-          $productVersion = Get-MsiProperty -Path $msiPath -Property "ProductVersion"
+          $productCode = Get-MsiProperty -Path $msiPath -Property "ProductCode"
           if (-not $productCode) { throw "Failed to read ProductCode from $msiPath" }
-          if ($productVersion -and $productVersion -ne $version) {
-            Write-Host "⚠️ MSI ProductVersion '$productVersion' != release version '$version'"
-          }
 
+          # Create output directory
           New-Item -ItemType Directory -Force -Path "winget" | Out-Null
 
+          # Build manifests
           $versionManifest = @"
-PackageIdentifier: SubrotoSaha.DeepCleaner
-PackageVersion: $version
-DefaultLocale: en-US
-ManifestType: version
-ManifestVersion: 1.6.0
-"@
+          PackageIdentifier: SubrotoSaha.DeepCleaner
+          PackageVersion: $version
+          DefaultLocale: en-US
+          ManifestType: version
+          ManifestVersion: 1.6.0
+          "@.Trim()
 
           $localeManifest = @"
-PackageIdentifier: SubrotoSaha.DeepCleaner
-PackageVersion: $version
-PackageLocale: en-US
-Publisher: Subroto Saha
-PublisherUrl: $repoUrl
-PublisherSupportUrl: $repoUrl/issues
-Author: Subroto Saha
-PackageName: DeepCleaner
-PackageUrl: $repoUrl
-License: MIT
-LicenseUrl: $repoUrl/blob/main/LICENSE
-Copyright: Copyright (c) 2025 Subroto Saha
-ShortDescription: A powerful Windows temporary files cleaner.
-Description: DeepCleaner is a professional Windows utility that helps you clean temporary files, system cache, and free up disk space. Features include safe cleaning algorithms, detailed scan reports, and scheduled cleaning options.
-Moniker: deepcleaner
-Tags:
-  - cleaner
-  - temp-files
-  - disk-cleanup
-  - system-utility
-  - windows
-  - maintenance
-ReleaseNotes: |
-  This release includes improvements and bug fixes.
-  For detailed changelog, visit: $repoUrl/releases/tag/v$version
-ReleaseNotesUrl: $repoUrl/releases/tag/v$version
-ManifestType: defaultLocale
-ManifestVersion: 1.6.0
-"@
+          PackageIdentifier: SubrotoSaha.DeepCleaner
+          PackageVersion: $version
+          PackageLocale: en-US
+          Publisher: Subroto Saha
+          PublisherUrl: $repoUrl
+          PublisherSupportUrl: $repoUrl/issues
+          Author: Subroto Saha
+          PackageName: DeepCleaner
+          PackageUrl: $repoUrl
+          License: MIT
+          LicenseUrl: $repoUrl/blob/main/LICENSE
+          Copyright: Copyright (c) 2025 Subroto Saha
+          ShortDescription: A powerful Windows temporary files cleaner.
+          Description: DeepCleaner is a professional Windows utility that helps you clean temporary files, system cache, and free up disk space. Features include safe cleaning algorithms, detailed scan reports, and scheduled cleaning options.
+          Moniker: deepcleaner
+          Tags:
+            - cleaner
+            - temp-files
+            - disk-cleanup
+            - system-utility
+            - windows
+            - maintenance
+          ReleaseNotes: |
+            This release includes improvements and bug fixes.
+            For detailed changelog, visit: $repoUrl/releases/tag/v$version
+          ReleaseNotesUrl: $repoUrl/releases/tag/v$version
+          ManifestType: defaultLocale
+          ManifestVersion: 1.6.0
+          "@.Trim()
 
           $installerManifest = @"
-PackageIdentifier: SubrotoSaha.DeepCleaner
-PackageVersion: $version
-Platform:
-  - Windows.Desktop
-MinimumOSVersion: 10.0.0.0
-InstallModes:
-  - interactive
-  - silent
-  - silentWithProgress
-UpgradeBehavior: install
-Installers:
-  - Architecture: x64
-    InstallerType: msi
-    InstallerUrl: $msiUrl
-    InstallerSha256: $hash
-    ProductCode: '$productCode'
-    Scope: machine
-    InstallerSwitches:
-      Silent: /qn /norestart
-      SilentWithProgress: /qb! /norestart
-ManifestType: installer
-ManifestVersion: 1.6.0
-"@
+          PackageIdentifier: SubrotoSaha.DeepCleaner
+          PackageVersion: $version
+          Platform:
+            - Windows.Desktop
+          MinimumOSVersion: 10.0.0.0
+          InstallModes:
+            - interactive
+            - silent
+            - silentWithProgress
+          UpgradeBehavior: install
+          Installers:
+            - Architecture: x64
+              InstallerType: msi
+              InstallerUrl: $msiUrl
+              InstallerSha256: $hash
+              ProductCode: '$productCode'
+              Scope: machine
+              InstallerSwitches:
+                Silent: /qn /norestart
+                SilentWithProgress: /qb! /norestart
+          ManifestType: installer
+          ManifestVersion: 1.6.0
+          "@.Trim()
 
-          $versionManifest   | Set-Content -Path "winget/SubrotoSaha.DeepCleaner.yaml" -Encoding UTF8
-          $localeManifest    | Set-Content -Path "winget/SubrotoSaha.DeepCleaner.locale.en-US.yaml" -Encoding UTF8
-          $installerManifest | Set-Content -Path "winget/SubrotoSaha.DeepCleaner.installer.yaml" -Encoding UTF8
+          Set-Content -Path "winget/SubrotoSaha.DeepCleaner.yaml" -Value $versionManifest -Encoding UTF8
+          Set-Content -Path "winget/SubrotoSaha.DeepCleaner.locale.en-US.yaml" -Value $localeManifest -Encoding UTF8
+          Set-Content -Path "winget/SubrotoSaha.DeepCleaner.installer.yaml" -Value $installerManifest -Encoding UTF8
 
           Write-Host "✅ WinGet manifests created"
           Write-Host "MSI URL:  $msiUrl"
           Write-Host "SHA256:   $hash"
           Write-Host "ProductCode: $productCode"
-          Write-Host "ProductVersion: $productVersion"
 
       - name: Upload WinGet Manifests as Artifacts
         if: ${{ !contains(steps.gitversion.outputs.FullSemVer, '-') }}
         uses: actions/upload-artifact@v4
         with:
-          name: winget-manifests-v${{ env.SAFE_VERSION }}
+          name: winget-manifests-v${{ steps.versions.outputs.safe }}
           path: winget/
 
-      - name: Install wingetcreate
+      - name: Download wingetcreate
         if: ${{ !contains(steps.gitversion.outputs.FullSemVer, '-') }}
         shell: pwsh
-        run: winget install --id Microsoft.WingetCreate --accept-package-agreements --accept-source-agreements
+        run: |
+          Invoke-WebRequest -Uri "https://github.com/microsoft/winget-create/releases/latest/download/wingetcreate.exe" -OutFile wingetcreate.exe
 
       - name: Validate WinGet manifests
         if: ${{ !contains(steps.gitversion.outputs.FullSemVer, '-') }}
         shell: pwsh
-        run: winget validate --manifest winget
+        run: .\wingetcreate.exe validate --manifest winget
 
       - name: Submit to WinGet
         if: ${{ !contains(steps.gitversion.outputs.FullSemVer, '-') }}
         env:
           WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
         shell: pwsh
-        run: wingetcreate submit winget -t "$env:WINGET_TOKEN" --prtitle "Add SubrotoSaha.DeepCleaner v${{ env.SAFE_VERSION }}"
+        run: .\wingetcreate.exe submit winget -t "$env:WINGET_TOKEN" --prtitle "Add SubrotoSaha.DeepCleaner v${{ steps.versions.outputs.safe }}"
