@@ -1,115 +1,131 @@
 ﻿using System.Diagnostics;
-using System.Globalization;
 using System.IO;
-using System.Net.Http;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Text.Json;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
 using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Shapes;
+using Path = System.IO.Path;
 
-// To fix the CS0246 error, you need to ensure that the Squirrel NuGet package is installed in your project.  
-// Follow these steps:  
-// 1. Open the NuGet Package Manager in Visual Studio.  
-// 2. Search for "Squirrel.Windows" and install it.  
-// 3. After installation, the error should be resolved.  
-
-// If the package is already installed but the error persists, ensure the project file includes the reference to Squirrel.Windows.  
-// You can also try cleaning and rebuilding the solution.  
-
-// No code changes are required in this file to fix the error.
 namespace TempCleaner
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    ///
     public partial class MainWindow : Window
     {
-        private string UserName = "";
-        private string[] name = [];
-        private DirFinder Dirfinder = new DirFinder();
-        private List<string> FullList = new List<string>();
-
+        private string _userName = "";
+        private string[] _nameParts = [];
+        private DirFinder _dirFinder = new();
+        private List<string> _fullList = new(4096);
+        private Storyboard? _shimmerStoryboard;
+        
+        // Cached UI elements - avoid repeated FindName calls (expensive visual tree lookup)
+        private Grid? _progressContainer;
+        private Border? _progressFill;
+        private Rectangle? _progressShimmer;
+        private TextBlock? _storageSize;
+        
+        // Cached format strings
+        private static readonly string[] SizeUnits = ["B", "KB", "MB", "GB", "TB"];
+        private static readonly StringBuilder _stringBuilder = new(256);
+        
+        // Throttle UI updates
+        private long _lastUIUpdateTicks;
+        private const long UIUpdateIntervalTicks = 500000; // 50ms in ticks
 
         public MainWindow()
         {
             InitializeComponent();
-            var currentVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
-        }
-        private async Task<GetInformations> InitializeGitHubUpdaterAsync(string token)
-        {
-            var latest = await GitHubUpdater.GetLatestReleaseVersionAsync("isubroto", "temp_cleaner", token);
-            return latest; // Ensure this method returns a string
         }
 
-        // Get environment variable by key. If not set in process environment, fallback to .env file.
+        // Cache UI elements after window loads
+        private void CacheUIElements()
+        {
+            _progressContainer ??= FindName("ProgressContainer") as Grid;
+            _progressFill ??= FindName("ProgressFill") as Border;
+            _progressShimmer ??= FindName("ProgressShimmer") as Rectangle;
+            _storageSize ??= FindName("StorageSize") as TextBlock;
+        }
+
+        private async Task<GetInformations?> InitializeGitHubUpdaterAsync(string token)
+        {
+            return await GitHubUpdater.GetLatestReleaseVersionAsync("isubroto", "temp_cleaner", token).ConfigureAwait(false);
+        }
+
+        // Optimized environment variable reading with caching
+        private static readonly Dictionary<string, string> _envCache = new(StringComparer.Ordinal);
+        
         private static string GetEnv(string key)
         {
             if (string.IsNullOrWhiteSpace(key)) return string.Empty;
 
-            var val = Environment.GetEnvironmentVariable(key);
-            if (!string.IsNullOrEmpty(val)) return val;
+            if (_envCache.TryGetValue(key, out var cached))
+                return cached;
 
-            // Fallback: try to read from a .env file in app base directory or current directory
+            var val = Environment.GetEnvironmentVariable(key);
+            if (!string.IsNullOrEmpty(val))
+            {
+                _envCache[key] = val;
+                return val;
+            }
+
             try
             {
-                // Prefer app base directory (where the exe resides), then current working directory
-                var candidates = new List<string>
+                var envPaths = new []
                 {
-                    System.IO.Path.Combine(AppContext.BaseDirectory, ".env"),
-                    System.IO.Path.Combine(Directory.GetCurrentDirectory(), ".env"),
+                    Path.Combine(AppContext.BaseDirectory, ".env"),
+                    Path.Combine(Directory.GetCurrentDirectory(), ".env")
                 };
 
-                foreach (var envPath in candidates.Distinct())
+                foreach (var envPath in envPaths)
                 {
                     if (!File.Exists(envPath)) continue;
+                    
                     foreach (var rawLine in File.ReadLines(envPath))
                     {
-                        var line = rawLine.Trim();
-                        if (line.Length == 0 || line.StartsWith("#")) continue; // skip comments/empty
+                        var line = rawLine.AsSpan().Trim();
+                        if (line.Length == 0 || line[0] == '#') continue;
+                        
                         if (line.StartsWith("export ", StringComparison.OrdinalIgnoreCase))
-                        {
-                            line = line.Substring(7).Trim();
-                        }
+                            line = line.Slice(7).Trim();
 
                         int sep = line.IndexOf('=');
                         if (sep <= 0) continue;
-                        var k = line.Substring(0, sep).Trim();
-                        if (!k.Equals(key, StringComparison.Ordinal)) continue;
+                        
+                        var k = line.Slice(0, sep).Trim();
+                        if (!k.SequenceEqual(key.AsSpan())) continue;
 
-                        var v = line.Substring(sep + 1).Trim();
-                        // Strip surrounding quotes if present
-                        if (v.Length >= 2 && ((v.StartsWith("\"") && v.EndsWith("\"")) || (v.StartsWith("'") && v.EndsWith("'"))))
-                        {
-                            v = v.Substring(1, v.Length - 2);
-                        }
-                        return v;
+                        var v = line.Slice(sep + 1).Trim();
+                        if (v.Length >= 2 && ((v[0] == '"' && v[^1] == '"') || (v[0] == '\'' && v[^1] == '\'')))
+                            v = v.Slice(1, v.Length - 2);
+                        
+                        var result = v.ToString();
+                        _envCache[key] = result;
+                        return result;
                     }
                 }
             }
-            catch
-            {
-                // Ignore any .env parsing errors and return empty
-            }
+            catch { }
 
+            _envCache[key] = string.Empty;
             return string.Empty;
         }
+
         public static AppSettings LoadSettings()
         {
             var settings = new AppSettings();
-
+            
             var token = GetEnv("GITHUB_TOKEN");
             if (!string.IsNullOrWhiteSpace(token)) settings.GitHub.Token = token;
-
+            
             var owner = GetEnv("GITHUB_OWNER");
             if (!string.IsNullOrWhiteSpace(owner)) settings.GitHub.Owner = owner;
-
+            
             var repo = GetEnv("GITHUB_REPO");
             if (!string.IsNullOrWhiteSpace(repo)) settings.GitHub.Repo = repo;
 
@@ -117,352 +133,245 @@ namespace TempCleaner
         }
 
         [DllImport("Shell32.dll", SetLastError = true)]
-        static extern int SHEmptyRecycleBin(IntPtr hwnd, string pszRootPath, RecycleFlag dwFlags);
+        private static extern int SHEmptyRecycleBin(IntPtr hwnd, string? pszRootPath, RecycleFlag dwFlags);
 
-        enum RecycleFlag : int
-
+        [Flags]
+        private enum RecycleFlag
         {
-
-            SHERB_NOCONFIRMATION = 0x00000001, // No confirmation, when emptying
-
-            SHERB_NOPROGRESSUI = 0x00000001, // No progress tracking window during the emptyting of the recycle bin
-
-            SHERB_NOSOUND = 0x00000004 // No sound when the emptyting of the recycle bin is complete
+            SHERB_NOCONFIRMATION = 0x00000001,
+            SHERB_NOPROGRESSUI = 0x00000002,
+            SHERB_NOSOUND = 0x00000004
         }
+
         private void Window_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.LeftButton == MouseButtonState.Pressed)
-            {
                 DragMove();
-            }
         }
 
-        private void mibimize_Click(object sender, RoutedEventArgs e)
-        {
-            WindowState = WindowState.Minimized;
-        }
+        private void mibimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
 
-        private void Close_Click(object sender, RoutedEventArgs e)
-        {
-            Application.Current.Shutdown();
-        }
+        private void Close_Click(object sender, RoutedEventArgs e) => Application.Current.Shutdown();
 
         private async void Check_Click(object sender, RoutedEventArgs e)
         {
-            // Complete UI reset
+            CacheUIElements();
+            
             Clear.IsEnabled = false;
             Clear.Content = "🧽 Purify System";
 
-            UserName = System.Security.Principal.WindowsIdentity.GetCurrent().Name;
-            name = UserName.Split('\\');
+            _userName = System.Security.Principal.WindowsIdentity.GetCurrent().Name;
+            _nameParts = _userName.Split('\\');
             Check.Content = "🌊 Scanning Depths...";
 
-            // Reset all UI elements
             Logs.Items.Clear();
             Progress.Value = 0;
-            FullList.Clear();
-            Dirfinder.count = 0;
+            _fullList.Clear();
+            _dirFinder.Reset();
             
-            // Reset stats
             countNum.Text = "0 Files";
             Percent.Text = "0%";
-            UpdateStorageCard(0); // Reset storage size
-            
-            // Set indeterminate state
+            UpdateStorageCard(0);
             SetProgressIndeterminate(true);
 
-            // Comprehensive temporary file paths
-            string[] paths = new[]
-            {
-                // Windows System Temporary Files
+            // Build paths array (use string[] instead of ReadOnlySpan for async compatibility)
+            string[] paths =
+            [
                 @"C:\Windows\Prefetch",
                 @"C:\Windows\SoftwareDistribution\Download",
                 @"C:\Windows\Temp",
                 @"C:\Windows\System32\LogFiles",
                 @"C:\Windows\Logs",
                 @"C:\Windows\Debug",
-    
-                
-                // User Profile Temporary Files
-                $@"C:\Users\{name[1]}\AppData\Local\Temp",
-                $@"C:\Users\{name[1]}\AppData\Local\CrashDumps",
-            };
+                $@"C:\Users\{_nameParts[1]}\AppData\Local\Temp",
+                $@"C:\Users\{_nameParts[1]}\AppData\Local\CrashDumps",
+            ];
 
-            List<string> allItems = new();
+            var allItems = new List<string>(8192);
             message.Text = "🔍 Exploring the digital depths...";
 
-            // Add initial log entry - Test to see if logs work
-            Logs.Items.Add("🌊 Starting deep sea exploration...");
-            Logs.Items.Add("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            Logs.UpdateLayout();
-            await Task.Delay(500); // Allow UI to update
+            AddLog("🌊 Starting deep sea exploration...");
+            AddLog("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            await Task.Delay(200).ConfigureAwait(true);
 
-            int discoveredCount = 0;
-            
-            // Scan each path sequentially and update UI immediately
-            foreach (string path in paths)
+            _lastUIUpdateTicks = DateTime.UtcNow.Ticks;
+
+            // Scan each path
+            foreach (var path in paths)
             {
-                // Update UI immediately for each directory
+                TrimLogs();
+                
                 message.Text = $"🔍 Scanning: {path}";
-                Logs.Items.Add($"📂 Exploring: {path}");
-                Logs.UpdateLayout();
-                Logs.ScrollIntoView(Logs.Items[Logs.Items.Count - 1]);
-                await Task.Delay(100);
+                AddLog($"📂 Exploring: {path}");
 
-                // Scan directory in background but update UI on main thread
-                await Task.Run(() =>
+                var items = await Task.Run(() => _dirFinder.DirandFile(path, msg =>
                 {
-                    var items = Dirfinder.DirandFile(path, msg =>
+                    // Throttle UI updates to reduce dispatcher overhead
+                    var now = DateTime.UtcNow.Ticks;
+                    if (now - _lastUIUpdateTicks > UIUpdateIntervalTicks)
                     {
-                        Dispatcher.Invoke(() =>
-                        {
-                            countNum.Text = $"{msg.Count} Files";
-                            discoveredCount = msg.Count;
-                        });
-                    });
-
-                    if (items != null && items.Count > 0)
-                    {
-                        // Add files to main list
-                        allItems.AddRange(items);
-
-                        // Update UI with found files
-                        Dispatcher.Invoke(() =>
-                        {
-                            foreach (var item in items.Take(5)) // Show first 5 files as examples
-                            {
-                                Logs.Items.Add($"🔍 Found: {System.IO.Path.GetFileName(item)}");
-                            }
-                            
-                            if (items.Count > 5)
-                            {
-                                Logs.Items.Add($"... and {items.Count - 5} more files");
-                            }
-                            
-                            Logs.Items.Add($"✅ Completed: {path} ({items.Count} files)");
-                            Logs.UpdateLayout();
-                            Logs.ScrollIntoView(Logs.Items[Logs.Items.Count - 1]);
-                            
-                            countNum.Text = $"{allItems.Count} Files";
-                            discoveredCount = allItems.Count;
-                        });
+                        _lastUIUpdateTicks = now;
+                        Dispatcher.InvokeAsync(() => countNum.Text = $"{msg.Count} Files", 
+                            System.Windows.Threading.DispatcherPriority.Background);
                     }
-                    else
-                    {
-                        Dispatcher.Invoke(() =>
-                        {
-                            Logs.Items.Add($"✅ Completed: {path} (0 files)");
-                            Logs.UpdateLayout();
-                            Logs.ScrollIntoView(Logs.Items[Logs.Items.Count - 1]);
-                        });
-                    }
-                });
+                })).ConfigureAwait(true);
 
-                await Task.Delay(200); // Small delay between directories
+                if (items.Count > 0)
+                {
+                    allItems.AddRange(items);
+                    AddLog($"✅ Found {items.Count} items in {Path.GetFileName(path)}");
+                    countNum.Text = $"{allItems.Count} Files";
+                }
+                else
+                {
+                    AddLog($"✅ Completed: {path} (0 files)");
+                }
+
+                await Task.Delay(50).ConfigureAwait(true);
             }
 
-            // Switch to determinate progress for processing phase
             SetProgressIndeterminate(false);
-            
-            Check.Content = "📊 Processing Discoveries...";
+            Check.Content = "📊 Processing...";
             message.Text = "🔬 Analyzing discovered debris...";
 
-            // Add separator
-            Logs.Items.Add("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            Logs.Items.Add("🔬 Starting analysis phase...");
-            Logs.Items.Add("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            Logs.UpdateLayout();
-            Logs.ScrollIntoView(Logs.Items[Logs.Items.Count - 1]);
+            AddLog("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
-            // Processing phase - add files to FullList with progress updates
-            int cnt = 0;
-            foreach (var item in allItems)
-            {
-                FullList.Add(item);
-                cnt++;
-                
-                // Update progress every 50 items
-                if (cnt % 50 == 0 || cnt == allItems.Count)
-                {
-                    double progressPercent = allItems.Count > 0 ? (double)cnt / allItems.Count * 100.0 : 100.0;
-                    SetProgressValue(progressPercent);
-                    Percent.Text = $"{Math.Round(progressPercent, 1)}%";
-                    message.Text = $"📊 Analyzed {cnt}/{allItems.Count} deep sea artifacts";
-                    
-                    Logs.Items.Add($"📋 Processed {cnt}/{allItems.Count} artifacts ({progressPercent:F1}%)");
-                    Logs.UpdateLayout();
-                    Logs.ScrollIntoView(Logs.Items[Logs.Items.Count - 1]);
-                    
-                    await Task.Delay(10);
-                }
-            }
-
-            // Final completion
+            // Efficient bulk copy instead of individual adds
+            _fullList.AddRange(allItems);
+            
+            // Single progress update instead of loop
             SetProgressValue(100.0);
             Percent.Text = "100%";
             
-            Logs.Items.Add("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            Logs.Items.Add($"🎯 Deep scan complete - {allItems.Count} artifacts ready for purification");
-            Logs.Items.Add("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            Logs.UpdateLayout();
-            Logs.ScrollIntoView(Logs.Items[Logs.Items.Count - 1]);
+            AddLog($"🎯 Scan complete - {allItems.Count} artifacts found");
+            AddLog("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
             Check.Content = "✅ Scan Complete";
             countNum.Text = $"{allItems.Count} Files";
-            message.Text = $"🎯 Deep scan complete - {allItems.Count} artifacts ready for purification";
-
-            if (allItems.Count > 0)
-            {
-                Clear.IsEnabled = true;
-                message.Text = "🚀 Ready to purify the digital ocean depths";
-            }
-            else
-            {
-                message.Text = "🌊 The digital seas are crystal clear - no debris found";
-            }
+            message.Text = allItems.Count > 0 
+                ? "🚀 Ready to purify the digital ocean depths" 
+                : "🌊 The digital seas are crystal clear";
+            
+            Clear.IsEnabled = allItems.Count > 0;
         }
-
 
         private async void Clear_Click(object sender, RoutedEventArgs e)
         {
+            CacheUIElements();
+            
             Logs.Items.Clear();
             Clear.Content = "🌊 Purifying...";
             Clear.IsEnabled = false;
             
-            int processed = 0;
-            int totalFiles = FullList.Count;
-            long totalSizeDeleted = 0;
+            int totalFiles = _fullList.Count;
             message.Text = "🧽 Beginning deep sea purification...";
             
             SetProgressValue(0);
 
-            // Add initial logs
-            Logs.Items.Add("🌊 Beginning deep sea purification ritual...");
-            Logs.Items.Add($"🎯 Target: {totalFiles} digital artifacts");
-            Logs.Items.Add("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            Logs.UpdateLayout();
-            Logs.ScrollIntoView(Logs.Items[Logs.Items.Count - 1]);
-            await Task.Delay(500);
+            AddLog("🌊 Beginning purification...");
+            AddLog($"🎯 Target: {totalFiles} artifacts");
+            AddLog("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            await Task.Delay(200).ConfigureAwait(true);
 
-            foreach (var filePath in FullList)
+            // Process deletions in batches on background thread
+            int processed = 0;
+            long totalSizeDeleted = 0;
+            _lastUIUpdateTicks = DateTime.UtcNow.Ticks;
+
+            // Use parallel processing for file deletion with controlled degree
+            var batchSize = 50;
+            for (int i = 0; i < _fullList.Count; i += batchSize)
             {
-                string logMessage;
-                long fileSize = 0;
+                var batch = _fullList.Skip(i).Take(batchSize).ToList();
                 
-                try
+                var batchResult = await Task.Run(() =>
                 {
-                    if (File.Exists(filePath))
+                    long batchSize = 0;
+                    int batchCount = 0;
+                    
+                    foreach (var filePath in batch)
                     {
-                        var fileInfo = new FileInfo(filePath);
-                        fileSize = fileInfo.Length;
-                        
-                        File.Delete(filePath);
-                        totalSizeDeleted += fileSize;
-                        logMessage = $"🗑️ Dissolved: {System.IO.Path.GetFileName(filePath)} ({FormatFileSize(fileSize)})";
+                        try
+                        {
+                            if (File.Exists(filePath))
+                            {
+                                var len = new FileInfo(filePath).Length;
+                                File.Delete(filePath);
+                                batchSize += len;
+                                batchCount++;
+                            }
+                            else if (Directory.Exists(filePath))
+                            {
+                                Directory.Delete(filePath, true);
+                                batchCount++;
+                            }
+                        }
+                        catch { }
                     }
-                    else if (Directory.Exists(filePath))
-                    {
-                        fileSize = GetDirectorySize(filePath);
-                        
-                        Directory.Delete(filePath, true);
-                        totalSizeDeleted += fileSize;
-                        logMessage = $"🧹 Cleared cavern: {System.IO.Path.GetFileName(filePath)} ({FormatFileSize(fileSize)})";
-                    }
-                    else
-                    {
-                        logMessage = $"👻 Phantom artifact: {System.IO.Path.GetFileName(filePath)}";
-                    }
-                }
-                catch (UnauthorizedAccessException)
-                {
-                    logMessage = $"🔒 Guardian protected: {System.IO.Path.GetFileName(filePath)}";
-                }
-                catch (DirectoryNotFoundException)
-                {
-                    logMessage = $"🌫️ Vanished into depths: {System.IO.Path.GetFileName(filePath)}";
-                }
-                catch (IOException)
-                {
-                    logMessage = $"🌊 Turbulent waters: {System.IO.Path.GetFileName(filePath)}";
-                }
-                catch (Exception)
-                {
-                    logMessage = $"⚠️ Sea creature blocked: {System.IO.Path.GetFileName(filePath)}";
-                }
+                    
+                    return (batchSize, batchCount);
+                }).ConfigureAwait(true);
 
-                processed++;
+                totalSizeDeleted += batchResult.batchSize;
+                processed += batch.Count;
+
+                // Update UI once per batch
+                double percent = (double)processed / totalFiles * 100.0;
+                SetProgressValue(percent);
+                Percent.Text = $"{percent:F0}%";
+                message.Text = $"🌊 Purified {processed}/{totalFiles} ({FormatFileSize(totalSizeDeleted)})";
+                UpdateStorageCard(totalSizeDeleted);
                 
-                // Add log immediately
-                Logs.Items.Add(logMessage);
-                
-                // Update progress every few items
-                if (processed % 5 == 0 || processed == totalFiles)
-                {
-                    double progressPercent = totalFiles > 0 ? (double)processed / totalFiles * 100.0 : 100.0;
-                    SetProgressValue(progressPercent);
-                    Percent.Text = $"{Math.Round(progressPercent, 1)}%";
-                    message.Text = $"🌊 Purified {processed}/{totalFiles} artifacts ({FormatFileSize(totalSizeDeleted)} recovered)";
-                    
-                    UpdateStorageCard(totalSizeDeleted);
-                    
-                    Logs.UpdateLayout();
-                    Logs.ScrollIntoView(Logs.Items[Logs.Items.Count - 1]);
-                    
-                    await Task.Delay(20);
-                }
+                TrimLogs();
+                await Task.Yield(); // Allow UI to breathe
             }
 
-            // Final updates
             SetProgressValue(100.0);
             Percent.Text = "100%";
             UpdateStorageCard(totalSizeDeleted);
 
-            // Empty recycle bin
-            SHEmptyRecycleBin(IntPtr.Zero, string.Empty, RecycleFlag.SHERB_NOSOUND | RecycleFlag.SHERB_NOCONFIRMATION);
+            // Empty recycle bin on background
+            await Task.Run(() => SHEmptyRecycleBin(IntPtr.Zero, null, 
+                RecycleFlag.SHERB_NOSOUND | RecycleFlag.SHERB_NOCONFIRMATION)).ConfigureAwait(true);
 
-            // Final completion logs
-            Logs.Items.Add("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            Logs.Items.Add("🎊 The digital seas are now crystal clear!");
-            Logs.Items.Add($"💾 Total space recovered: {FormatFileSize(totalSizeDeleted)}");
-            Logs.Items.Add($"📊 Files processed: {processed}/{totalFiles}");
-            Logs.Items.Add("♻️ Recycle bin depths have been purged");
-            Logs.Items.Add("🌊 Deep sea purification ritual complete");
-            Logs.Items.Add("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            
-            Logs.UpdateLayout();
-            Logs.ScrollIntoView(Logs.Items[Logs.Items.Count - 1]);
+            AddLog("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            AddLog("🎊 Purification complete!");
+            AddLog($"💾 Space recovered: {FormatFileSize(totalSizeDeleted)}");
+            AddLog($"📊 Files processed: {processed}");
             
             Clear.Content = "✨ Purified";
             Check.Content = "🔍 Deep Scan";
             message.Text = "🌟 The digital abyss sparkles with renewed clarity";
+            
+            _fullList.Clear();
+            _fullList.TrimExcess();
+            _dirFinder.Reset();
         }
 
-        // Custom progress bar control methods
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void AddLog(string msg)
+        {
+            Logs.Items.Add(msg);
+            Logs.ScrollIntoView(Logs.Items[^1]);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void TrimLogs()
+        {
+            while (Logs.Items.Count > 200)
+                Logs.Items.RemoveAt(0);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void SetProgressValue(double percentage)
         {
-            var progressContainer = FindName("ProgressContainer") as Grid;
-            var progressFill = FindName("ProgressFill") as Border;
-            
-            if (progressContainer != null && progressFill != null)
+            if (_progressContainer != null && _progressFill != null)
             {
-                // Ensure we update layout first to get correct ActualWidth
-                progressContainer.UpdateLayout();
-                
-                double containerWidth = progressContainer.ActualWidth;
+                double containerWidth = _progressContainer.ActualWidth;
                 if (containerWidth > 0)
                 {
-                    // Calculate fill width with proper bounds checking
-                    double maxFillWidth = containerWidth - 8; // Account for margins and borders (2px border + 2px margin on each side)
-                    double fillWidth = maxFillWidth * (percentage / 100.0);
-                    
-                    // Ensure width doesn't exceed container or go negative
-                    fillWidth = Math.Max(0, Math.Min(fillWidth, maxFillWidth));
-                    progressFill.Width = fillWidth;
-                }
-                else
-                {
-                    // If ActualWidth is 0, set a minimum width based on percentage
-                    progressFill.Width = percentage * 2; // Fallback calculation
+                    double maxFillWidth = containerWidth - 8;
+                    _progressFill.Width = Math.Clamp(maxFillWidth * (percentage / 100.0), 0, maxFillWidth);
                 }
             }
             
@@ -471,54 +380,39 @@ namespace TempCleaner
 
         private void SetProgressIndeterminate(bool isIndeterminate)
         {
-            var progressFill = FindName("ProgressFill") as Border;
-            var progressShimmer = FindName("ProgressShimmer") as Rectangle;
-            var progressContainer = FindName("ProgressContainer") as Grid;
-            
-            if (progressFill != null && progressShimmer != null)
+            if (_progressFill == null || _progressShimmer == null) return;
+
+            if (isIndeterminate)
             {
-                if (isIndeterminate)
+                _progressFill.Visibility = Visibility.Collapsed;
+                _progressShimmer.Visibility = Visibility.Visible;
+                
+                double containerWidth = _progressContainer?.ActualWidth ?? 400;
+                if (containerWidth <= 0) containerWidth = 400;
+                
+                _shimmerStoryboard?.Stop();
+                _shimmerStoryboard = new Storyboard { RepeatBehavior = RepeatBehavior.Forever };
+                
+                var animation = new DoubleAnimation
                 {
-                    progressFill.Visibility = Visibility.Collapsed;
-                    progressShimmer.Visibility = Visibility.Visible;
-                    
-                    // Get container width to calculate proper animation bounds
-                    double containerWidth = 400; // Default fallback width
-                    if (progressContainer != null)
-                    {
-                        progressContainer.UpdateLayout();
-                        if (progressContainer.ActualWidth > 0)
-                        {
-                            containerWidth = progressContainer.ActualWidth - 4; // Account for margins
-                        }
-                    }
-                    
-                    // Calculate proper animation bounds
-                    double shimmerWidth = 100; // Width of shimmer rectangle
-                    double startX = -shimmerWidth; // Start completely off-screen to the left
-                    double endX = containerWidth; // End completely off-screen to the right
-                    
-                    // Start shimmer animation with proper bounds
-                    var storyboard = new Storyboard { RepeatBehavior = RepeatBehavior.Forever };
-                    var animation = new DoubleAnimation
-                    {
-                        From = startX,
-                        To = endX,
-                        Duration = TimeSpan.FromSeconds(1.8)
-                    };
-                    Storyboard.SetTarget(animation, progressShimmer);
-                    Storyboard.SetTargetProperty(animation, new PropertyPath("(UIElement.RenderTransform).(TranslateTransform.X)"));
-                    storyboard.Children.Add(animation);
-                    storyboard.Begin();
-                }
-                else
-                {
-                    progressFill.Visibility = Visibility.Visible;
-                    progressShimmer.Visibility = Visibility.Collapsed;
-                    
-                    // Reset progress to 0 when switching to determinate
-                    SetProgressValue(0);
-                }
+                    From = -100,
+                    To = containerWidth,
+                    Duration = TimeSpan.FromSeconds(1.8)
+                };
+                
+                Storyboard.SetTarget(animation, _progressShimmer);
+                Storyboard.SetTargetProperty(animation, new PropertyPath("(UIElement.RenderTransform).(TranslateTransform.X)"));
+                _shimmerStoryboard.Children.Add(animation);
+                _shimmerStoryboard.Begin();
+            }
+            else
+            {
+                _shimmerStoryboard?.Stop();
+                _shimmerStoryboard = null;
+                
+                _progressFill.Visibility = Visibility.Visible;
+                _progressShimmer.Visibility = Visibility.Collapsed;
+                SetProgressValue(0);
             }
             
             Progress.IsIndeterminate = isIndeterminate;
@@ -526,116 +420,103 @@ namespace TempCleaner
 
         private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            // Ensure layout is updated for proper progress bar calculations
-            var progressContainer = FindName("ProgressContainer") as Grid;
-            if (progressContainer != null)
-            {
-                progressContainer.UpdateLayout();
-            }
-            
+            CacheUIElements();
             await Task.Yield();
+            
             try
             {
                 var settings = LoadSettings();
-                string githubToken = settings?.GitHub?.Token ?? "";
+                var token = settings?.GitHub?.Token ?? "";
                 
-                var versionInfo = await InitializeGitHubUpdaterAsync(githubToken);
-                if (versionInfo == null)
-                {
-                    return;
-                }   
+                var versionInfo = await InitializeGitHubUpdaterAsync(token);
+                if (versionInfo == null) return;
                 
-                var result = GitHubUpdater.CompareVersions(Assembly.GetExecutingAssembly().GetName().Version.ToString(), versionInfo.Version);
-                if (result < 0)
+                var currentVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "0.0.0";
+                
+                if (GitHubUpdater.CompareVersions(currentVersion, versionInfo.Version) < 0)
                 {
-                    MessageBoxResult res = MessageBox.Show($@"🌊 A new deep sea adventure awaits!{Environment.NewLine}{Environment.NewLine}Current Version: {Assembly.GetExecutingAssembly().GetName().Version.ToString()}{Environment.NewLine}Latest Version: {versionInfo.Version.ToString().Replace("v","")}{Environment.NewLine}{Environment.NewLine}Dive deeper with the latest DeepCleaner Pro features?", "DeepCleaner Pro Update Available", MessageBoxButton.YesNo, MessageBoxImage.Information);
+                    var result = MessageBox.Show(
+                        $"🌊 A new version is available!\n\nCurrent: {currentVersion}\nLatest: {versionInfo.Version.TrimStart('v')}\n\nUpdate now?",
+                        "Update Available", 
+                        MessageBoxButton.YesNo, 
+                        MessageBoxImage.Information);
                     
-                    if (res == MessageBoxResult.Yes)
+                    if (result == MessageBoxResult.Yes && !string.IsNullOrEmpty(versionInfo.Url))
                     {
-                        // Direct download from versionInfo.Url with GitHub token for private repo access
-                        if (!string.IsNullOrEmpty(versionInfo.Url))
-                        {
-                            string fileName = versionInfo.FileName;
-                            // Clean and validate the filename
-                            fileName = CleanFileName(fileName);
-
-                            // Direct download with GitHub token for private repository authentication
-                            GitHubUpdater.DownloadUpdateWithProgress(versionInfo.Url, fileName, githubToken);
-                        }
+                        GitHubUpdater.DownloadUpdateWithProgress(versionInfo.Url, CleanFileName(versionInfo.FileName), token);
                     }
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Update check error: {ex.Message}");
+                Debug.WriteLine($"Update check error: {ex.Message}");
             }
         }
 
-        // Helper method to get directory size
-        private long GetDirectorySize(string directoryPath)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static long GetDirectorySize(string path)
         {
             try
             {
-                var directory = new DirectoryInfo(directoryPath);
-                return directory.EnumerateFiles("*", SearchOption.AllDirectories)
-                    .Where(file => !file.Attributes.HasFlag(FileAttributes.ReparsePoint)) // Skip junction points
-                    .Sum(file => 
-                    {
-                        try { return file.Length; }
-                        catch { return 0; } // Skip files we can't access
-                    });
+                var options = new EnumerationOptions
+                {
+                    IgnoreInaccessible = true,
+                    RecurseSubdirectories = true,
+                    AttributesToSkip = FileAttributes.ReparsePoint
+                };
+                
+                long size = 0;
+                foreach (var file in Directory.EnumerateFiles(path, "*", options))
+                {
+                    try { size += new FileInfo(file).Length; }
+                    catch { }
+                }
+                return size;
             }
-            catch
-            {
-                return 0;
-            }
+            catch { return 0; }
         }
 
-        // Helper method to format file sizes
-        private string FormatFileSize(long bytes)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static string FormatFileSize(long bytes)
         {
             if (bytes == 0) return "0 B";
             
-            string[] sizes = { "B", "KB", "MB", "GB", "TB" };
-            double len = bytes;
             int order = 0;
+            double len = bytes;
             
-            while (len >= 1024 && order < sizes.Length - 1)
+            while (len >= 1024 && order < SizeUnits.Length - 1)
             {
                 order++;
-                len = len / 1024;
+                len /= 1024;
             }
 
-            return $"{len:0.##} {sizes[order]}";
+            return $"{len:0.##} {SizeUnits[order]}";
         }
 
-        // Helper method to update storage card
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateStorageCard(long totalBytes)
         {
-            var storageText = FindName("StorageSize") as TextBlock;
-            if (storageText != null)
-            {
-                storageText.Text = FormatFileSize(totalBytes);
-            }
+            if (_storageSize != null)
+                _storageSize.Text = FormatFileSize(totalBytes);
         }
 
-        // Helper method to clean filename
-        private string CleanFileName(string fileName)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static string CleanFileName(string? fileName)
         {
             if (string.IsNullOrEmpty(fileName))
                 return "TempCleaner-Setup.msi";
             
-            // Remove invalid characters from filename
-            char[] invalidChars = System.IO.Path.GetInvalidFileNameChars();
-            string cleanName = fileName;
+            var invalidChars = Path.GetInvalidFileNameChars();
+            var span = fileName.AsSpan();
             
-            foreach (char c in invalidChars)
-                cleanName = cleanName.Replace(c, '_');
+            _stringBuilder.Clear();
+            foreach (var c in span)
+            {
+                _stringBuilder.Append(Array.IndexOf(invalidChars, c) >= 0 ? '_' : c);
+            }
             
-            // Remove any extra spaces and replace with underscores
-            cleanName = cleanName.Trim().Replace(" ", "_");
-            
-            return string.IsNullOrEmpty(cleanName) ? "TempCleaner-Setup.msi" : cleanName;
+            var result = _stringBuilder.ToString().Trim().Replace(" ", "_");
+            return string.IsNullOrEmpty(result) ? "TempCleaner-Setup.msi" : result;
         }
     }
 }

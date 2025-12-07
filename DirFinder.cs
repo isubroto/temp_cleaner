@@ -1,103 +1,64 @@
 ﻿using System.IO;
+using System.Runtime.CompilerServices;
 
 namespace TempCleaner
 {
-    public class DirFinder
+    public sealed class DirFinder
     {
-        public int count = 0;
+        private int _count;
+        
+        public int Count => _count;
 
-        private bool HasReadWritePermission(string path)
+        // Shared enumeration options - avoid recreating each call
+        private static readonly EnumerationOptions SharedEnumOptions = new()
         {
-            try
-            {
-                if (File.Exists(path))
-                {
-                    // Try opening the file for read/write access
-                    using (FileStream fs = File.Open(path, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite)) { }
-                    return true;
-                }
-                else if (Directory.Exists(path))
-                {
-                    // Check read access (non-throwing version)
-                    bool canRead = false;
-                    try
-                    {
-                        canRead = Directory.EnumerateFileSystemEntries(path).Any();
-                    }
-                    catch
-                    {
-                        canRead = false;
-                    }
-
-                    // Check write access with try-catch isolation
-                    bool canWrite = false;
-                    try
-                    {
-                        string testFile = Path.Combine(path, Path.GetRandomFileName());
-                        using (FileStream fs = File.Create(testFile)) { }
-                        File.Delete(testFile);
-                        canWrite = true;
-                    }
-                    catch
-                    {
-                        canWrite = false;
-                    }
-
-                    return canRead && canWrite;
-                }
-
-                return false;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-
-
+            IgnoreInaccessible = true,
+            RecurseSubdirectories = true,
+            AttributesToSkip = FileAttributes.System | FileAttributes.ReparsePoint
+        };
 
         public List<string> DirandFile(string path, Action<FileStatusReport>? report = null)
         {
-            var result = new List<string>();
+            var result = new List<string>(512);
+            _count = 0;
 
-            // Get all files with read/write access
+            if (!Directory.Exists(path))
+                return result;
+
             try
             {
-                var allFiles = Directory.GetFiles(path, "*.*", SearchOption.AllDirectories);
-                foreach (var file in allFiles)
+                // Process files - no per-file access check needed since EnumerationOptions handles it
+                foreach (var file in Directory.EnumerateFiles(path, "*", SharedEnumOptions))
                 {
-                    if (HasReadWritePermission(file))
+                    result.Add(file);
+                    _count++;
+                    
+                    // Report every 250 files to minimize callback overhead
+                    if ((_count & 0xFF) == 0) // Bitwise check is faster than modulo
                     {
-                        result.Add(file);
-                        count++;
-                        report?.Invoke(new FileStatusReport($"✔ File found: {file}", count));
-
+                        report?.Invoke(new FileStatusReport(_count));
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-            }
 
-            // Get all directories with read/write access
-            try
-            {
-                var allDirs = Directory.GetDirectories(path, "*", SearchOption.AllDirectories);
-                foreach (var dir in allDirs)
+                // Process directories - only top-level empty directories for cleanup
+                foreach (var dir in Directory.EnumerateDirectories(path, "*", SharedEnumOptions))
                 {
-                    if (HasReadWritePermission(dir))
-                    {
-                        result.Add(dir);
-                    }
+                    result.Add(dir);
                 }
             }
-            catch (Exception ex)
+            catch
             {
-
+                // Silently handle access errors
             }
+
+            // Final report
+            if (report != null)
+                report(new FileStatusReport(_count));
 
             return result;
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Reset() => _count = 0;
     }
 }

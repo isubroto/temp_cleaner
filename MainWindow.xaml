@@ -262,7 +262,7 @@
                             Click="mibimize_Click" 
                             Margin="0,0,16,0"/>
                     
-                    <Button x:Name="Close" 
+                    <Button x:Name="CloseButton" 
                             Content="✕" 
                             Click="Close_Click">
                         <Button.Style>

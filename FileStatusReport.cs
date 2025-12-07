@@ -1,15 +1,15 @@
 ﻿namespace TempCleaner
 {
-    public class FileStatusReport
+    /// <summary>
+    /// Lightweight struct for file status reporting to avoid heap allocations
+    /// </summary>
+    public readonly struct FileStatusReport
     {
-        public string Message { get; set; }
-        public int Count { get; set; }
+        public int Count { get; }
 
-        public FileStatusReport(string message, int count)
+        public FileStatusReport(int count)
         {
-            Message = message;
             Count = count;
         }
     }
-
 }

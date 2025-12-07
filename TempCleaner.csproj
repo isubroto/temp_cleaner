@@ -7,22 +7,43 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
 
-    <!-- 👇 ADD/MODIFY THESE LINES FOR THE NEW NAME 👇 -->
+    <!-- Application Identity -->
     <AssemblyName>DeepCleaner</AssemblyName>
-    <RootNamespace>NewApp</RootNamespace>
-    <Product>New DeepCleaner Pro</Product> <!-- This is the "Product Name" in file properties -->
-    <Company>Subroto</Company> <!-- Optional: Set your company name -->
+    <RootNamespace>TempCleaner</RootNamespace>
+    <Product>DeepCleaner Pro</Product>
+    <Company>Subroto</Company>
+    <Version>0.1.36.3</Version>
     
+    <!-- Resources -->
     <ApplicationIcon>Images\Designer.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    
+    <!-- Publishing Configuration -->
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-    <Version>0.1.36.3</Version>
+    
+    <!-- Performance Optimizations -->
+    <TieredCompilation>true</TieredCompilation>
+    <TieredCompilationQuickJit>true</TieredCompilationQuickJit>
+    <TieredCompilationQuickJitForLoops>true</TieredCompilationQuickJitForLoops>
+    
+    <!-- Memory Optimizations - Use Workstation GC for lower memory footprint -->
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+    <RetainVMGarbageCollection>false</RetainVMGarbageCollection>
+    
+    <!-- Compilation -->
+    <Deterministic>true</Deterministic>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
-  <!-- ... The rest of your file stays the same ... -->
-
+  <!-- Release-specific optimizations -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+    <Optimize>true</Optimize>
+  </PropertyGroup>
 
   <ItemGroup>
     <Folder Include="Images\" />
