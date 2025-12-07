@@ -22,20 +22,7 @@
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-    
-    <!-- Performance Optimizations -->
-    <TieredCompilation>true</TieredCompilation>
-    <TieredCompilationQuickJit>true</TieredCompilationQuickJit>
-    <TieredCompilationQuickJitForLoops>true</TieredCompilationQuickJitForLoops>
-    
-    <!-- Memory Optimizations - Use Workstation GC for lower memory footprint -->
-    <ServerGarbageCollection>false</ServerGarbageCollection>
-    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
-    <RetainVMGarbageCollection>false</RetainVMGarbageCollection>
-    
-    <!-- Compilation -->
-    <Deterministic>true</Deterministic>
-    <LangVersion>latest</LangVersion>
+    <Version>0.1.36.3</Version>
   </PropertyGroup>
 
   <!-- Release-specific optimizations -->
@@ -52,4 +39,3 @@
   </ItemGroup>
 
 </Project>
-
