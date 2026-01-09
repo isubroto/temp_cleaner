@@ -82,7 +82,7 @@ namespace TempCleaner
                 foreach (var asset in assets.EnumerateArray())
                 {
                     if (!asset.TryGetProperty("name", out var nameProp)) continue;
-                    
+
                     var name = nameProp.GetString();
                     if (name == null || !name.EndsWith(".msi", StringComparison.OrdinalIgnoreCase)) continue;
 
@@ -123,7 +123,7 @@ namespace TempCleaner
             {
                 int c = i < currentCount ? currentParts[i] : 0;
                 int l = i < latestCount ? latestParts[i] : 0;
-                
+
                 if (c < l) return -1;
                 if (c > l) return 1;
             }
@@ -181,7 +181,7 @@ namespace TempCleaner
             try
             {
                 var fileName = Path.GetFileName(new Uri(url).LocalPath);
-                
+
                 if (!string.IsNullOrEmpty(fileName) && fileName.EndsWith(".msi", StringComparison.OrdinalIgnoreCase))
                 {
                     DownloadUpdateWithProgress(url, fileName, githubToken);
