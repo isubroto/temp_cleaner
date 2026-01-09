@@ -115,7 +115,11 @@ namespace TempCleaner
             catch (Exception ex)
             {
                 StatusText.Text = "⚠️ Download failed";
-                MessageBox.Show($"Download error: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                CustomMessageBox.Show(this, 
+                    $"Download error occurred:\n\n{ex.Message}\n\nPlease check your internet connection and try again.", 
+                    "Download Failed", 
+                    CustomMessageBox.MessageBoxButton.OK, 
+                    CustomMessageBox.MessageBoxImage.Error);
                 Close();
             }
         }
@@ -180,7 +184,13 @@ namespace TempCleaner
                 return;
             }
             
-            if (MessageBox.Show("Cancel download?", "Confirm", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            var result = CustomMessageBox.Show(this, 
+                "Are you sure you want to cancel the download?", 
+                "Confirm Cancellation", 
+                CustomMessageBox.MessageBoxButton.YesNo, 
+                CustomMessageBox.MessageBoxImage.Question);
+            
+            if (result == CustomMessageBox.MessageBoxResult.Yes)
             {
                 _cts?.Cancel();
                 Close();
@@ -191,7 +201,11 @@ namespace TempCleaner
         {
             if (!File.Exists(_downloadPath))
             {
-                MessageBox.Show("Downloaded file not found!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                CustomMessageBox.Show(this, 
+                    "The downloaded file was not found!\n\nPlease try downloading again.", 
+                    "File Not Found", 
+                    CustomMessageBox.MessageBoxButton.OK, 
+                    CustomMessageBox.MessageBoxImage.Error);
                 return;
             }
 
@@ -213,11 +227,19 @@ namespace TempCleaner
                 try
                 {
                     Process.Start("explorer.exe", $"/select,\"{_downloadPath}\"");
-                    MessageBox.Show($"Please install manually:\n{_downloadPath}", "Manual Install", MessageBoxButton.OK, MessageBoxImage.Information);
+                    CustomMessageBox.Show(this, 
+                        $"Unable to launch the installer automatically.\n\nPlease install manually from:\n\n{_downloadPath}", 
+                        "Manual Installation Required", 
+                        CustomMessageBox.MessageBoxButton.OK, 
+                        CustomMessageBox.MessageBoxImage.Information);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Could not launch installer: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    CustomMessageBox.Show(this, 
+                        $"Failed to launch installer:\n\n{ex.Message}\n\nFile location:\n{_downloadPath}", 
+                        "Installation Error", 
+                        CustomMessageBox.MessageBoxButton.OK, 
+                        CustomMessageBox.MessageBoxImage.Error);
                 }
             }
         }

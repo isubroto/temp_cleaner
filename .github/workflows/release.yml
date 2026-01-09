@@ -54,7 +54,23 @@ jobs:
         run: |
           $full = '${{ steps.gitversion.outputs.FullSemVer }}'
           $safe = $full -replace '\+', '.'
+          
+          # Ensure 4-component version for Windows compatibility
+          $parts = $safe -split '\.'
+          if ($parts.Length -eq 3) {
+            $safe = "$safe.0"
+            Write-Host "Extended 3-component version to 4-component: $safe"
+          } elseif ($parts.Length -gt 4) {
+            $safe = "$($parts[0]).$($parts[1]).$($parts[2]).$($parts[3])"
+            Write-Host "Trimmed version to 4 components: $safe"
+          }
+          
           $msi  = '${{ steps.gitversion.outputs.MajorMinorPatch }}' # 3-part for MSI
+          
+          Write-Host "Full SemVer: $full"
+          Write-Host "Safe 4-component: $safe"
+          Write-Host "MSI 3-component: $msi"
+          
           Add-Content -Path $env:GITHUB_OUTPUT -Value "full=$full"
           Add-Content -Path $env:GITHUB_OUTPUT -Value "safe=$safe"
           Add-Content -Path $env:GITHUB_OUTPUT -Value "msi=$msi"
@@ -65,16 +81,40 @@ jobs:
           $projFile = Get-Item $env:project
           Write-Host "Updating version in: $($projFile.FullName)"
           $version = '${{ steps.versions.outputs.safe }}'
-          $versionTag = "<Version>$version</Version>"
-
+          
           $content = Get-Content $projFile.FullName -Raw
-          if ($content -notmatch '<Version>.*?</Version>') {
-            $content = $content -replace '</PropertyGroup>', "$versionTag`n</PropertyGroup>"
-          } else {
-            $content = $content -replace '<Version>.*?</Version>', $versionTag
+          
+          # Update all version tags
+          $versionTags = @('Version', 'AssemblyVersion', 'FileVersion', 'InformationalVersion')
+          foreach ($tag in $versionTags) {
+            $pattern = "<$tag>.*?</$tag>"
+            $replacement = "<$tag>$version</$tag>"
+            if ($content -notmatch $pattern) {
+              Write-Host "Adding <$tag> tag"
+              $content = $content -replace '</PropertyGroup>', "    <$tag>$version</$tag>`n  </PropertyGroup>"
+            } else {
+              Write-Host "Updating <$tag> tag"
+              $content = $content -replace $pattern, $replacement
+            }
           }
+          
           Set-Content $projFile.FullName $content -Encoding UTF8
-          Get-Content $projFile.FullName | Select-String "<Version>"
+          Write-Host "`n=== Updated .csproj version tags ==="
+          Get-Content $projFile.FullName | Select-String "<Version>|<AssemblyVersion>|<FileVersion>|<InformationalVersion>"
+
+      - name: Update app.manifest Version
+        shell: pwsh
+        run: |
+          $manifestFile = "app.manifest"
+          Write-Host "Updating version in: $manifestFile"
+          $version = '${{ steps.versions.outputs.safe }}'
+          
+          $content = Get-Content $manifestFile -Raw
+          $content = $content -replace 'version="[\d\.]+"', "version=`"$version`""
+          Set-Content $manifestFile $content -Encoding UTF8
+          
+          Write-Host "`n=== Updated app.manifest version ==="
+          Get-Content $manifestFile | Select-String 'version='
 
       - name: Restore Dependencies
         shell: pwsh
@@ -160,14 +200,14 @@ jobs:
         run: |
           git config user.name "Subroto Saha"
           git config user.email "isubrotosaha@gmail.com"
-          git add $env:project
+          git add $env:project app.manifest
           if (git diff --cached --quiet) {
             Write-Host "🟢 No changes to commit. Version already up to date."
           } else {
             $safeVersion = '${{ steps.versions.outputs.safe }}'
             git commit -m "🔖 Bump version to $safeVersion"
             git push origin HEAD
-            Write-Host "✅ Committed and pushed updated .csproj version: $safeVersion"
+            Write-Host "✅ Committed and pushed updated .csproj and app.manifest version: $safeVersion"
           }
 
       # -----------------------------
