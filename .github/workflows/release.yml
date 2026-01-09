@@ -65,15 +65,11 @@ jobs:
             Write-Host "Trimmed version to 4 components: $safe"
           }
 
-          $msi  = '${{ steps.gitversion.outputs.MajorMinorPatch }}' # 3-part for MSI
-
           Write-Host "Full SemVer: $full"
-          Write-Host "Safe 4-component: $safe"
-          Write-Host "MSI 3-component: $msi"
+          Write-Host "Safe 4-component version: $safe"
 
           Add-Content -Path $env:GITHUB_OUTPUT -Value "full=$full"
           Add-Content -Path $env:GITHUB_OUTPUT -Value "safe=$safe"
-          Add-Content -Path $env:GITHUB_OUTPUT -Value "msi=$msi"
 
       - name: Update .csproj Version
         shell: pwsh
@@ -81,40 +77,16 @@ jobs:
           $projFile = Get-Item $env:project
           Write-Host "Updating version in: $($projFile.FullName)"
           $version = '${{ steps.versions.outputs.safe }}'
+          $versionTag = "<Version>$version</Version>"
 
           $content = Get-Content $projFile.FullName -Raw
-
-          # Update all version tags
-          $versionTags = @('Version', 'AssemblyVersion', 'FileVersion', 'InformationalVersion')
-          foreach ($tag in $versionTags) {
-            $pattern = "<$tag>.*?</$tag>"
-            $replacement = "<$tag>$version</$tag>"
-            if ($content -notmatch $pattern) {
-              Write-Host "Adding <$tag> tag"
-              $content = $content -replace '</PropertyGroup>', "    <$tag>$version</$tag>`n  </PropertyGroup>"
-            } else {
-              Write-Host "Updating <$tag> tag"
-              $content = $content -replace $pattern, $replacement
-            }
+          if ($content -notmatch '<Version>.*?</Version>') {
+            $content = $content -replace '</PropertyGroup>', "$versionTag`n</PropertyGroup>"
+          } else {
+            $content = $content -replace '<Version>.*?</Version>', $versionTag
           }
-
           Set-Content $projFile.FullName $content -Encoding UTF8
-          Write-Host "`n=== Updated .csproj version tags ==="
-          Get-Content $projFile.FullName | Select-String "<Version>|<AssemblyVersion>|<FileVersion>|<InformationalVersion>"
-
-      - name: Update app.manifest Version
-        shell: pwsh
-        run: |
-          $manifestFile = "app.manifest"
-          Write-Host "Updating version in: $manifestFile"
-          $version = '${{ steps.versions.outputs.safe }}'
-
-          $content = Get-Content $manifestFile -Raw
-          $content = $content -replace 'version="[\d\.]+"', "version=`"$version`""
-          Set-Content $manifestFile $content -Encoding UTF8
-
-          Write-Host "`n=== Updated app.manifest version ==="
-          Get-Content $manifestFile | Select-String 'version='
+          Get-Content $projFile.FullName | Select-String "<Version>"
 
       - name: Restore Dependencies
         shell: pwsh
@@ -159,7 +131,7 @@ jobs:
         working-directory: Installer
         shell: pwsh
         run: |
-          $safeVersion = '${{ steps.versions.outputs.safe }}'   # 4-part version for MSI and file names
+          $safeVersion = '${{ steps.versions.outputs.safe }}'   # 4-part version (x.x.x.x) for MSI and file names
 
           "SAFE_VERSION=$safeVersion" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
@@ -167,7 +139,6 @@ jobs:
             -arch x64 `
             -define ProductVersion=$safeVersion `
             -define SourceDir="..\bin\Release\net8.0-windows\win-x64" `
-            -ext WixToolset.UI.wixext `
             -out "../publish/DeepCleaner-$safeVersion.msi"
 
       - name: Upload Release Artifacts
@@ -200,14 +171,14 @@ jobs:
         run: |
           git config user.name "Subroto Saha"
           git config user.email "isubrotosaha@gmail.com"
-          git add $env:project app.manifest
+          git add $env:project
           if (git diff --cached --quiet) {
             Write-Host "🟢 No changes to commit. Version already up to date."
           } else {
             $safeVersion = '${{ steps.versions.outputs.safe }}'
             git commit -m "🔖 Bump version to $safeVersion"
             git push origin HEAD
-            Write-Host "✅ Committed and pushed updated .csproj and app.manifest version: $safeVersion"
+            Write-Host "✅ Committed and pushed updated .csproj version: $safeVersion"
           }
 
       # -----------------------------
