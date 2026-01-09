@@ -1,6 +1,6 @@
-<?xml version="0.1.39.4" encoding="utf-8"?>
-<assembly manifestversion="0.1.39.4" xmlns="urn:schemas-microsoft-com:asm.v1">
-  <assemblyIdentity version="0.1.39.4" name="DeepCleaner.app"/>
+<?xml version="0.1.40.4" encoding="utf-8"?>
+<assembly manifestversion="0.1.40.4" xmlns="urn:schemas-microsoft-com:asm.v1">
+  <assemblyIdentity version="0.1.40.4" name="DeepCleaner.app"/>
   <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
     <security>
       <requestedPrivileges xmlns="urn:schemas-microsoft-com:asm.v3">
@@ -67,7 +67,7 @@
       <assemblyIdentity
           type="win32"
           name="Microsoft.Windows.Common-Controls"
-          version="0.1.39.4"
+          version="0.1.40.4"
           processorArchitecture="*"
           publicKeyToken="6595b64144ccf1df"
           language="*"
@@ -77,4 +77,5 @@
   -->
 
 </assembly>
+
 
