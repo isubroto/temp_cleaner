@@ -14,24 +14,24 @@
         <SolidColorBrush x:Key="AbyssSecondary" Color="#1A2332"/>
         <SolidColorBrush x:Key="AbyssSurface" Color="#243447"/>
         <SolidColorBrush x:Key="AbyssCard" Color="#2F4562"/>
-        
+
         <!-- Bioluminescent Accents -->
         <SolidColorBrush x:Key="BioTeal" Color="#00D4AA"/>
         <SolidColorBrush x:Key="BioBlue" Color="#0099FF"/>
         <SolidColorBrush x:Key="BioCyan" Color="#00E5FF"/>
-        
+
         <!-- Text Colors -->
         <SolidColorBrush x:Key="TextPrimary" Color="#E8F4FD"/>
         <SolidColorBrush x:Key="TextSecondary" Color="#B3D9F2"/>
         <SolidColorBrush x:Key="TextMuted" Color="#7BA7CC"/>
-        
+
         <!-- Gradients -->
         <LinearGradientBrush x:Key="AbyssGradient" StartPoint="0,0" EndPoint="1,1">
             <GradientStop Color="#0B1426" Offset="0"/>
             <GradientStop Color="#1A2332" Offset="0.5"/>
             <GradientStop Color="#243447" Offset="1"/>
         </LinearGradientBrush>
-        
+
         <LinearGradientBrush x:Key="BioGradient" StartPoint="0,0" EndPoint="1,0">
             <GradientStop Color="#00D4AA" Offset="0"/>
             <GradientStop Color="#0099FF" Offset="0.5"/>
@@ -106,14 +106,14 @@
                         <ColumnDefinition/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    
+
                     <TextBlock x:Name="FileNameText"
                                Text="DeepCleaner_Pro_Setup.msi" 
                                Foreground="{StaticResource TextPrimary}" 
                                FontSize="14" 
                                FontWeight="Medium"
                                VerticalAlignment="Center"/>
-                    
+
                     <TextBlock x:Name="ProgressText"
                                Grid.Column="1"
                                Text="0%" 
@@ -149,7 +149,7 @@
                         <ColumnDefinition/>
                         <ColumnDefinition/>
                     </Grid.ColumnDefinitions>
-                    
+
                     <StackPanel Grid.Column="0">
                         <TextBlock Text="Downloaded" 
                                    Foreground="{StaticResource TextMuted}" 
@@ -162,7 +162,7 @@
                                    FontWeight="Medium"
                                    HorizontalAlignment="Center"/>
                     </StackPanel>
-                    
+
                     <StackPanel Grid.Column="1">
                         <TextBlock Text="Total Size" 
                                    Foreground="{StaticResource TextMuted}" 
@@ -175,7 +175,7 @@
                                    FontWeight="Medium"
                                    HorizontalAlignment="Center"/>
                     </StackPanel>
-                    
+
                     <StackPanel Grid.Column="2">
                         <TextBlock Text="Speed" 
                                    Foreground="{StaticResource TextMuted}" 
@@ -198,7 +198,7 @@
                         Style="{StaticResource AbyssButton}"
                         Margin="0,0,10,0"
                         Click="CancelButton_Click"/>
-                
+
                 <Button x:Name="InstallButton"
                         Content="Install Now" 
                         Style="{StaticResource AbyssButton}"

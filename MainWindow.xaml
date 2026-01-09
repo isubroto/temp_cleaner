@@ -21,36 +21,36 @@
         <SolidColorBrush x:Key="AbyssSurface" Color="#243447"/>
         <SolidColorBrush x:Key="AbyssCard" Color="#2F4562"/>
         <SolidColorBrush x:Key="AbyssGlass" Color="#34506D"/>
-        
+
         <!-- Bioluminescent Accents -->
         <SolidColorBrush x:Key="BioTeal" Color="#00D4AA"/>
         <SolidColorBrush x:Key="BioBlue" Color="#0099FF"/>
         <SolidColorBrush x:Key="BioCyan" Color="#00E5FF"/>
         <SolidColorBrush x:Key="BioGreen" Color="#00FFA1"/>
-        
+
         <!-- Text Colors -->
         <SolidColorBrush x:Key="TextPrimary" Color="#E8F4FD"/>
         <SolidColorBrush x:Key="TextSecondary" Color="#B3D9F2"/>
         <SolidColorBrush x:Key="TextMuted" Color="#7BA7CC"/>
-        
+
         <!-- Status Colors -->
         <SolidColorBrush x:Key="SuccessGlow" Color="#00FFA1"/>
         <SolidColorBrush x:Key="WarningGlow" Color="#FFB347"/>
         <SolidColorBrush x:Key="DangerGlow" Color="#FF6B6B"/>
-        
+
         <!-- Gradients -->
         <LinearGradientBrush x:Key="AbyssGradient" StartPoint="0,0" EndPoint="1,1">
             <GradientStop Color="#0B1426" Offset="0"/>
             <GradientStop Color="#1A2332" Offset="0.5"/>
             <GradientStop Color="#243447" Offset="1"/>
         </LinearGradientBrush>
-        
+
         <LinearGradientBrush x:Key="BioGradient" StartPoint="0,0" EndPoint="1,0">
             <GradientStop Color="#00D4AA" Offset="0"/>
             <GradientStop Color="#0099FF" Offset="0.5"/>
             <GradientStop Color="#00E5FF" Offset="1"/>
         </LinearGradientBrush>
-        
+
         <LinearGradientBrush x:Key="SuccessGradient" StartPoint="0,0" EndPoint="1,0">
             <GradientStop Color="#00FFA1" Offset="0"/>
             <GradientStop Color="#00D4AA" Offset="1"/>
@@ -61,6 +61,33 @@
             <GradientStop Color="#2000D4AA" Offset="0.7"/>
             <GradientStop Color="#0000D4AA" Offset="1"/>
         </RadialGradientBrush>
+
+        <!-- Custom Tooltip Style -->
+        <Style TargetType="ToolTip">
+            <Setter Property="Background" Value="{StaticResource AbyssCard}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BioTeal}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="FontFamily" Value="Segoe UI Variable, Inter, Segoe UI"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToolTip">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="8"
+                                Padding="{TemplateBinding Padding}">
+                            <Border.Effect>
+                                <DropShadowEffect Color="#00D4AA" Direction="270" ShadowDepth="0" Opacity="0.4" BlurRadius="12"/>
+                            </Border.Effect>
+                            <ContentPresenter/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
         <!-- Ultra Modern Button Style -->
         <Style x:Key="AbyssButton" TargetType="Button">
@@ -81,7 +108,7 @@
                                     Background="{StaticResource GlowEffect}"
                                     CornerRadius="16" 
                                     Opacity="0"/>
-                            
+
                             <!-- Main Button -->
                             <Border Name="mainBorder" 
                                     Background="{TemplateBinding Background}" 
@@ -218,7 +245,7 @@
                     <Border Width="60" Height="60" 
                             CornerRadius="30" 
                             Margin="0,0,20,0">
-                        
+
                         <Border.RenderTransform>
                             <TranslateTransform/>
                         </Border.RenderTransform>
@@ -231,7 +258,7 @@
                             <ImageBrush ImageSource="Images/Designer.png" Stretch="UniformToFill"/>
                         </Border.Background>
                     </Border>
-                    
+
                     <StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="DeepCleaner" 
@@ -256,15 +283,92 @@
 
                 <!-- Window Controls -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <!-- Info Menu -->
+                    <Border Background="{StaticResource AbyssCard}"
+                            BorderBrush="{StaticResource BioTeal}"
+                            BorderThickness="0"
+                            CornerRadius="20"
+                            Padding="12,8"
+                            Margin="0,0,16,0">
+                        <Border.Effect>
+                            <DropShadowEffect Color="#00D4AA" Direction="270" ShadowDepth="0" Opacity="0.3" BlurRadius="12"/>
+                        </Border.Effect>
+
+                        <StackPanel Orientation="Horizontal">
+                            <!-- Check for Updates Link -->
+                            <TextBlock Foreground="{StaticResource TextSecondary}"
+                                       FontSize="11"
+                                       FontFamily="Segoe UI Variable, Inter, Segoe UI"
+                                       FontWeight="Medium"
+                                       VerticalAlignment="Center"
+                                       Cursor="Hand"
+                                       Margin="0,0,12,0"
+                                       MouseLeftButtonDown="CheckUpdateButton_Click">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="⟳ Updates"/>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Foreground" Value="{StaticResource BioTeal}"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                                <TextBlock.ToolTip>
+                                    <ToolTip Content="Check for available updates"/>
+                                </TextBlock.ToolTip>
+                            </TextBlock>
+
+                            <!-- Separator -->
+                            <Border Width="1" 
+                                    Height="12" 
+                                    Background="{StaticResource TextMuted}" 
+                                    Opacity="0.3"
+                                    Margin="0,0,12,0"/>
+
+                            <!-- About Info Link -->
+                            <TextBlock Foreground="{StaticResource TextSecondary}"
+                                       FontSize="11"
+                                       FontFamily="Segoe UI Variable, Inter, Segoe UI"
+                                       FontWeight="Medium"
+                                       VerticalAlignment="Center"
+                                       Cursor="Hand"
+                                       MouseLeftButtonDown="InfoButton_Click">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="ⓘ About"/>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Foreground" Value="{StaticResource BioBlue}"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                                <TextBlock.ToolTip>
+                                    <ToolTip Content="About DeepCleaner Pro"/>
+                                </TextBlock.ToolTip>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Minimize Button -->
                     <Button x:Name="mibimize" 
                             Content="─" 
                             Style="{StaticResource GlassControl}"
                             Click="mibimize_Click" 
-                            Margin="0,0,16,0"/>
-                    
+                            Margin="0,0,16,0">
+                        <Button.ToolTip>
+                            <ToolTip Content="Minimize"/>
+                        </Button.ToolTip>
+                    </Button>
+
+                    <!-- Close Button -->
                     <Button x:Name="CloseButton" 
                             Content="✕" 
                             Click="Close_Click">
+                        <Button.ToolTip>
+                            <ToolTip Content="Close Application"/>
+                        </Button.ToolTip>
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource GlassControl}">
                                 <Setter Property="Background" Value="{StaticResource DangerGlow}"/>
@@ -298,7 +402,7 @@
                         <ColumnDefinition/>
                         <ColumnDefinition/>
                     </Grid.ColumnDefinitions>
-                    
+
                     <!-- System Status Card -->
                     <Border Grid.Column="0" 
                             Background="{StaticResource AbyssSurface}"
@@ -311,7 +415,18 @@
                             <DropShadowEffect Color="#00D4AA" Direction="270" ShadowDepth="0" Opacity="0.2" BlurRadius="20"/>
                         </Border.Effect>
                         <StackPanel>
-                            <TextBlock Text="💻" FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,12"/>
+                            <Border Width="48" Height="48" 
+                                    CornerRadius="24" 
+                                    Background="{StaticResource BioBlue}"
+                                    HorizontalAlignment="Center" 
+                                    Margin="0,0,0,12">
+                                <TextBlock Text="⚙" 
+                                           FontSize="28" 
+                                           FontWeight="Bold"
+                                           Foreground="White"
+                                           HorizontalAlignment="Center" 
+                                           VerticalAlignment="Center"/>
+                            </Border>
                             <TextBlock Text="System" 
                                        Foreground="{StaticResource TextPrimary}" 
                                        FontSize="16" 
@@ -337,7 +452,18 @@
                             <DropShadowEffect Color="#00D4AA" Direction="270" ShadowDepth="0" Opacity="0.2" BlurRadius="20"/>
                         </Border.Effect>
                         <StackPanel>
-                            <TextBlock Text="📁" FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,12"/>
+                            <Border Width="48" Height="48" 
+                                    CornerRadius="24" 
+                                    Background="{StaticResource BioTeal}"
+                                    HorizontalAlignment="Center" 
+                                    Margin="0,0,0,12">
+                                <TextBlock Text="📄" 
+                                           FontSize="28" 
+                                           FontWeight="Bold"
+                                           Foreground="White"
+                                           HorizontalAlignment="Center" 
+                                           VerticalAlignment="Center"/>
+                            </Border>
                             <TextBlock x:Name="countNum" 
                                        Text="0 Files" 
                                        Foreground="{StaticResource TextPrimary}" 
@@ -364,7 +490,18 @@
                             <DropShadowEffect Color="#00D4AA" Direction="270" ShadowDepth="0" Opacity="0.2" BlurRadius="20"/>
                         </Border.Effect>
                         <StackPanel>
-                            <TextBlock Text="⚡" FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,12"/>
+                            <Border Width="48" Height="48" 
+                                    CornerRadius="24" 
+                                    Background="{StaticResource WarningGlow}"
+                                    HorizontalAlignment="Center" 
+                                    Margin="0,0,0,12">
+                                <TextBlock Text="⚡" 
+                                           FontSize="28" 
+                                           FontWeight="Bold"
+                                           Foreground="White"
+                                           HorizontalAlignment="Center" 
+                                           VerticalAlignment="Center"/>
+                            </Border>
                             <TextBlock x:Name="Percent" 
                                        Text="0%" 
                                        Foreground="{StaticResource TextPrimary}" 
@@ -391,7 +528,18 @@
                             <DropShadowEffect Color="#00D4AA" Direction="270" ShadowDepth="0" Opacity="0.2" BlurRadius="20"/>
                         </Border.Effect>
                         <StackPanel>
-                            <TextBlock Text="💾" FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,12"/>
+                            <Border Width="48" Height="48" 
+                                    CornerRadius="24" 
+                                    Background="{StaticResource SuccessGlow}"
+                                    HorizontalAlignment="Center" 
+                                    Margin="0,0,0,12">
+                                <TextBlock Text="💾" 
+                                           FontSize="28" 
+                                           FontWeight="Bold"
+                                           Foreground="White"
+                                           HorizontalAlignment="Center" 
+                                           VerticalAlignment="Center"/>
+                            </Border>
                             <TextBlock x:Name="StorageSize"
                                        Text="0 GB" 
                                        Foreground="{StaticResource TextPrimary}" 
@@ -417,7 +565,7 @@
                                 BorderBrush="{StaticResource BioTeal}"
                                 BorderThickness="2"
                                 ClipToBounds="True"/>
-                        
+
                         <!-- Clipping Container for Progress Elements -->
                         <Border CornerRadius="8" Margin="2" ClipToBounds="True">
                             <!-- Progress Fill -->
@@ -431,7 +579,7 @@
                                 </Border.Effect>
                             </Border>
                         </Border>
-                        
+
                         <!-- Shimmer Container with Clipping -->
                         <Border CornerRadius="8" Margin="2" ClipToBounds="True">
                             <!-- Shimmer for Indeterminate State -->
@@ -450,7 +598,7 @@
                             </Rectangle>
                         </Border>
                     </Grid>
-                    
+
                     <!-- Hidden Standard Progress Bar for Logic -->
                     <ProgressBar x:Name="Progress"
                                  Height="0"
@@ -459,7 +607,7 @@
                                  Minimum="0"
                                  IsIndeterminate="False"
                                  Visibility="Hidden"/>
-                    
+
                     <!-- Status Message -->
                     <TextBlock x:Name="message" 
                                Text="Ready to dive deep into system cleanup" 
@@ -479,20 +627,27 @@
 
                     <!-- Scan Button -->
                     <Button x:Name="Check" 
-                            Content="🔍 Deep Scan" 
+                            Content="⚲ Deep Scan" 
                             Style="{StaticResource AbyssButton}"
                             FontSize="18"
                             Height="64"
-                            Click="Check_Click"/>
+                            Click="Check_Click">
+                        <Button.ToolTip>
+                            <ToolTip Content="Scan for temporary files and junk data"/>
+                        </Button.ToolTip>
+                    </Button>
 
                     <!-- Clean Button -->
                     <Button x:Name="Clear" 
-                            Content="🧽 Purify System" 
+                            Content="✓ Purify System" 
                             Grid.Column="2"
                             FontSize="18"
                             Height="64"
                             Click="Clear_Click"
                             IsEnabled="False">
+                        <Button.ToolTip>
+                            <ToolTip Content="Clean all discovered temporary files"/>
+                        </Button.ToolTip>
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource AbyssButton}">
                                 <Setter Property="Background" Value="{StaticResource SuccessGradient}"/>
@@ -590,7 +745,7 @@
                                             </ControlTemplate>
                                         </Setter.Value>
                                     </Setter>
-                </Style>
+                                </Style>
                             </ListBox.Resources>
 
                             <ListBox.ItemsPanel>
