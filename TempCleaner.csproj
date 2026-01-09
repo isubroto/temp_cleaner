@@ -12,10 +12,10 @@
     <RootNamespace>TempCleaner</RootNamespace>
     <Product>DeepCleaner Pro</Product>
     <Company>Subroto</Company>
-    <Version>0.1.38.3</Version>
-    <AssemblyVersion>0.1.38.3</AssemblyVersion>
-    <FileVersion>0.1.38.3</FileVersion>
-    <InformationalVersion>0.1.38.3</InformationalVersion>
+    <Version>0.1.39.4</Version>
+    <AssemblyVersion>0.1.39.4</AssemblyVersion>
+    <FileVersion>0.1.39.4</FileVersion>
+    <InformationalVersion>0.1.39.4</InformationalVersion>
     
     <!-- Resources -->
     <ApplicationIcon>Images\Designer.ico</ApplicationIcon>
@@ -44,3 +44,4 @@
   </ItemGroup>
 
 </Project>
+
