@@ -5,9 +5,6 @@
            Manufacturer="Subroto Saha"
            Version="$(var.ProductVersion)"
            UpgradeCode="8ed2b67f-6148-4943-97a2-49d4c7a7dfec"
-           InstallerVersion="500"
-           InstallScope="perMachine"
-           Compressed="yes"
            >
     <Media Id="1" Cabinet="media1.cab" EmbedCab="yes" />
 

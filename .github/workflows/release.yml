@@ -54,7 +54,7 @@ jobs:
         run: |
           $full = '${{ steps.gitversion.outputs.FullSemVer }}'
           $safe = $full -replace '\+', '.'
-          
+
           # Ensure 4-component version for Windows compatibility
           $parts = $safe -split '\.'
           if ($parts.Length -eq 3) {
@@ -64,13 +64,13 @@ jobs:
             $safe = "$($parts[0]).$($parts[1]).$($parts[2]).$($parts[3])"
             Write-Host "Trimmed version to 4 components: $safe"
           }
-          
+
           $msi  = '${{ steps.gitversion.outputs.MajorMinorPatch }}' # 3-part for MSI
-          
+
           Write-Host "Full SemVer: $full"
           Write-Host "Safe 4-component: $safe"
           Write-Host "MSI 3-component: $msi"
-          
+
           Add-Content -Path $env:GITHUB_OUTPUT -Value "full=$full"
           Add-Content -Path $env:GITHUB_OUTPUT -Value "safe=$safe"
           Add-Content -Path $env:GITHUB_OUTPUT -Value "msi=$msi"
@@ -81,9 +81,9 @@ jobs:
           $projFile = Get-Item $env:project
           Write-Host "Updating version in: $($projFile.FullName)"
           $version = '${{ steps.versions.outputs.safe }}'
-          
+
           $content = Get-Content $projFile.FullName -Raw
-          
+
           # Update all version tags
           $versionTags = @('Version', 'AssemblyVersion', 'FileVersion', 'InformationalVersion')
           foreach ($tag in $versionTags) {
@@ -97,7 +97,7 @@ jobs:
               $content = $content -replace $pattern, $replacement
             }
           }
-          
+
           Set-Content $projFile.FullName $content -Encoding UTF8
           Write-Host "`n=== Updated .csproj version tags ==="
           Get-Content $projFile.FullName | Select-String "<Version>|<AssemblyVersion>|<FileVersion>|<InformationalVersion>"
@@ -108,11 +108,11 @@ jobs:
           $manifestFile = "app.manifest"
           Write-Host "Updating version in: $manifestFile"
           $version = '${{ steps.versions.outputs.safe }}'
-          
+
           $content = Get-Content $manifestFile -Raw
           $content = $content -replace 'version="[\d\.]+"', "version=`"$version`""
           Set-Content $manifestFile $content -Encoding UTF8
-          
+
           Write-Host "`n=== Updated app.manifest version ==="
           Get-Content $manifestFile | Select-String 'version='
 
@@ -159,14 +159,13 @@ jobs:
         working-directory: Installer
         shell: pwsh
         run: |
-          $safeVersion = '${{ steps.versions.outputs.safe }}'   # for file names/tags
-          $msiVersion  = '${{ steps.versions.outputs.msi }}'    # 3-part numeric for MSI
+          $safeVersion = '${{ steps.versions.outputs.safe }}'   # 4-part version for MSI and file names
 
           "SAFE_VERSION=$safeVersion" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
           & "C:\Program Files\WiX Toolset v6.0\bin\wix.exe" build Product.wxs Files.wxs `
             -arch x64 `
-            -define ProductVersion=$msiVersion `
+            -define ProductVersion=$safeVersion `
             -define SourceDir="..\bin\Release\net8.0-windows\win-x64" `
             -ext WixToolset.UI.wixext `
             -out "../publish/DeepCleaner-$safeVersion.msi"
