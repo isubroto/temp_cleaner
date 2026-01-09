@@ -170,7 +170,7 @@ jobs:
           name: unsigned-exe
           path: unsigned/
 
-      # Create a zip for SignPath (it signs all files inside)
+      # Create a zip artifact for SignPath (it signs all files inside)
       - name: Create signing package
         run: |
           cd unsigned
@@ -178,37 +178,43 @@ jobs:
           cd ..
           ls -lh signing-package.zip
 
+      - name: Upload signing package as artifact
+        uses: actions/upload-artifact@v4
+        id: upload-signing-package
+        with:
+          name: signing-package
+          path: signing-package.zip
+          if-no-files-found: error
+
       - name: Submit to SignPath
         uses: signpath/github-action-submit-signing-request@v1
         id: signpath
         with:
           api-token: "${{ secrets.SIGNPATH_API_TOKEN }}"
-          organization-id: "${{ secrets.SIGNPATH_ORG }}" # ← UPDATE THIS!
+          organization-id: "${{ secrets.SIGNPATH_ORG }}"
           project-slug: "DeepCleaner"
           signing-policy-slug: "release-signing"
           artifact-configuration-slug: "Initial version"
-          input-artifact-path: "signing-package.zip"
-          output-artifact-path: "signed-package.zip"
+          github-artifact-id: ${{ steps.upload-signing-package.outputs.artifact-id }}
           wait-for-completion: true
           wait-for-completion-timeout-in-seconds: 600
+          output-artifact-directory: "signed"
 
-      - name: Extract Signed Files
+      - name: List signed files
         run: |
-          mkdir -p signed
-          unzip signed-package.zip -d signed/
           ls -lh signed/
 
       - name: Upload Signed MSI
         uses: actions/upload-artifact@v4
         with:
           name: signed-msi
-          path: signed/*.msi
+          path: signed/**/*.msi
 
       - name: Upload Signed EXE
         uses: actions/upload-artifact@v4
         with:
           name: signed-exe
-          path: signed/*.exe
+          path: signed/**/*.exe
 
   # ==========================================
   # RELEASE JOB
