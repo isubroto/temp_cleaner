@@ -168,6 +168,7 @@ jobs:
             -arch x64 `
             -define ProductVersion=$msiVersion `
             -define SourceDir="..\bin\Release\net8.0-windows\win-x64" `
+            -ext WixToolset.UI.wixext `
             -out "../publish/DeepCleaner-$safeVersion.msi"
 
       - name: Upload Release Artifacts
