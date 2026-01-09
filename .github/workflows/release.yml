@@ -119,15 +119,17 @@ jobs:
             -define SourceDir="..\bin\Release\net8.0-windows\win-x64" `
             -out "../publish/DeepCleaner-$safeVersion.msi"
 
-      # Upload unsigned artifacts for signing
-      - name: Upload Unsigned MSI for Signing
+      # ✅ Upload unsigned artifacts for signing
+      - name: Upload Unsigned MSI
+        id: upload-unsigned-msi
         uses: actions/upload-artifact@v4
         with:
           name: unsigned-msi
           path: publish/DeepCleaner-*.msi
           if-no-files-found: error
 
-      - name: Upload Unsigned EXE for Signing
+      - name: Upload Unsigned EXE
+        id: upload-unsigned-exe
         uses: actions/upload-artifact@v4
         with:
           name: unsigned-exe
@@ -148,16 +150,18 @@ jobs:
           }
 
   # ==========================================
-  # SIGNING JOB - Uses SignPath.io (Free OSS)
+  # SIGNING JOB - Uses SignPath.io v2
   # ==========================================
   sign:
     needs: build
     runs-on: ubuntu-latest
     name: Sign with SignPath
-    # Only sign stable releases (skip pre-releases like alpha/beta)
-    if: ${{ !contains(needs.build.outputs.full_version, '-') }}
+    if: |
+      success() &&
+      !contains(needs.build.outputs.full_version, '-')
 
     steps:
+      # ✅ Re-upload artifacts to make them available for SignPath
       - name: Download Unsigned MSI
         uses: actions/download-artifact@v4
         with:
@@ -170,64 +174,59 @@ jobs:
           name: unsigned-exe
           path: unsigned/
 
-      # Create a zip artifact for SignPath (it signs all files inside)
-      - name: Create signing package
-        run: |
-          cd unsigned
-          zip -r ../signing-package.zip .
-          cd ..
-          ls -lh signing-package.zip
-
-      - name: Upload signing package as artifact
+      # ✅ Create combined artifact for signing
+      - name: Upload Combined Unsigned Artifact
+        id: upload-unsigned-artifact
         uses: actions/upload-artifact@v4
-        id: upload-signing-package
         with:
-          name: signing-package
-          path: signing-package.zip
+          name: unsigned-combined
+          path: unsigned/
           if-no-files-found: error
 
-      - name: Submit to SignPath
-        uses: signpath/github-action-submit-signing-request@v1
+      # ✅ Submit to SignPath using v2 action
+      - name: Sign with SignPath
         id: signpath
+        uses: signpath/github-action-submit-signing-request@v2
         with:
-          api-token: "${{ secrets.SIGNPATH_API_TOKEN }}"
-          organization-id: "${{ secrets.SIGNPATH_ORG }}"
-          project-slug: "DeepCleaner"
-          signing-policy-slug: "release-signing"
-          artifact-configuration-slug: "Initial version"
-          github-artifact-id: ${{ steps.upload-signing-package.outputs.artifact-id }}
+          api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
+          organization-id: '${{ secrets.SIGNPATH_ORG }}'
+          project-slug: 'DeepCleaner'
+          signing-policy-slug: 'release-signing'
+          artifact-configuration-slug: 'initial'
+          github-artifact-id: '${{ steps.upload-unsigned-artifact.outputs.artifact-id }}'
           wait-for-completion: true
-          wait-for-completion-timeout-in-seconds: 600
-          output-artifact-directory: "signed"
+          output-artifact-directory: 'signed'
 
       - name: List signed files
-        run: |
-          ls -lh signed/
+        run: ls -lhR signed/
 
       - name: Upload Signed MSI
         uses: actions/upload-artifact@v4
         with:
           name: signed-msi
           path: signed/**/*.msi
+          if-no-files-found: error
 
       - name: Upload Signed EXE
         uses: actions/upload-artifact@v4
         with:
           name: signed-exe
           path: signed/**/*.exe
+          if-no-files-found: error
 
   # ==========================================
   # RELEASE JOB
   # ==========================================
   release:
     needs: [build, sign]
-    # Run if sign succeeded, OR if it was skipped (prerelease)
-    if: always() && needs.build.result == 'success'
     runs-on: windows-latest
     name: Create Release
+    if: |
+      always() &&
+      needs.build.result == 'success' &&
+      (needs.sign.result == 'success' || needs.sign.result == 'skipped')
 
     steps:
-      # Download signed artifacts if available, otherwise unsigned
       - name: Download Signed MSI
         if: needs.sign.result == 'success'
         uses: actions/download-artifact@v4
@@ -242,19 +241,23 @@ jobs:
           name: signed-exe
           path: release/
 
-      - name: Download Unsigned MSI (fallback)
-        if: needs.sign.result != 'success'
+      - name: Download Unsigned MSI (fallback for prerelease)
+        if: needs.sign.result == 'skipped'
         uses: actions/download-artifact@v4
         with:
           name: unsigned-msi
           path: release/
 
-      - name: Download Unsigned EXE (fallback)
-        if: needs.sign.result != 'success'
+      - name: Download Unsigned EXE (fallback for prerelease)
+        if: needs.sign.result == 'skipped'
         uses: actions/download-artifact@v4
         with:
           name: unsigned-exe
           path: release/
+
+      - name: List release files
+        shell: pwsh
+        run: Get-ChildItem -Path release -Recurse
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -265,8 +268,8 @@ jobs:
             ## 🧹 DeepCleaner v${{ needs.build.outputs.version }}
 
             ### 📦 What's Included
-            - ✅ **Signed MSI Installer** - Trusted by Windows (no SmartScreen warnings!)
-            - ✅ **Signed Portable Executable** - Run without installation
+            - ✅ **MSI Installer** - Standard Windows installer
+            - ✅ **Portable Executable** - Run without installation
 
             ### 🚀 Installation
 
@@ -282,7 +285,7 @@ jobs:
             Download `TempCleaner.exe` and run directly (no installation needed).
 
             ### 🔐 Code Signing
-            All binaries are digitally signed with a trusted certificate via SignPath.io
+            ${{ needs.sign.result == 'success' && 'All binaries are digitally signed via SignPath.io' || '⚠️ This is a pre-release with unsigned binaries' }}
 
             ### 📝 Notes
             Report issues: https://github.com/${{ github.repository }}/issues
@@ -297,10 +300,14 @@ jobs:
   # WINGET SUBMISSION
   # ==========================================
   winget:
-    needs: [build, release]
-    if: ${{ !contains(needs.build.outputs.full_version, '-') }}
+    needs: [build, sign, release]
     runs-on: windows-latest
     name: Submit to WinGet
+    if: |
+      success() &&
+      needs.release.result == 'success' &&
+      needs.sign.result == 'success' &&
+      !contains(needs.build.outputs.full_version, '-')
 
     steps:
       - name: Checkout
