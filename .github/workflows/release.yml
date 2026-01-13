@@ -85,7 +85,14 @@ jobs:
 
       - name: Publish WPF App
         shell: pwsh
-        run: dotnet publish ${{ env.project }} -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true --no-build
+        run: dotnet publish ${{ env.project }} -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o publish --no-build
+
+      - name: Rename executable with version
+        shell: pwsh
+        run: |
+          $version = '${{ steps.versions.outputs.safe }}'
+          Rename-Item -Path "publish\DeepCleaner.exe" -NewName "DeepCleaner-$version.exe"
+          Write-Host "✅ Renamed to DeepCleaner-$version.exe"
 
       - name: Install WiX Toolset
         shell: pwsh
@@ -94,17 +101,16 @@ jobs:
           Start-Process wix6.msi -ArgumentList "/quiet" -Wait
           Remove-Item wix6.msi
 
-      - name: Generate Files.wxs excluding 'publish' folder
+      - name: Generate Files.wxs from publish folder
         shell: pwsh
         run: |
-          & "C:\Program Files\WiX Toolset v6.0\bin\x64\heat.exe" dir "bin\Release\net8.0-windows\win-x64" `
+          & "C:\Program Files\WiX Toolset v6.0\bin\x64\heat.exe" dir "publish" `
             -cg AppFiles `
             -dr INSTALLFOLDER `
             -srd -gg `
             -sreg -scom `
             -var var.SourceDir `
-            -out Installer\Files.wxs `
-            -t Installer\TransformExcludePublish.xsl
+            -out Installer\Files.wxs
 
       - name: Show Files.wxs
         shell: pwsh
@@ -125,8 +131,8 @@ jobs:
           & "C:\Program Files\WiX Toolset v6.0\bin\wix.exe" build Product.wxs Files.wxs `
             -arch x64 `
             -define ProductVersion=$safeVersion `
-            -define SourceDir="..\bin\Release\net8.0-windows\win-x64" `
-            -out "../publish/DeepCleaner-$safeVersion.msi"
+            -define SourceDir="..\publish" `
+            -out "../msi-output/DeepCleaner-$safeVersion.msi"
 
       - name: Upload Release Artifacts
         uses: softprops/action-gh-release@v2
@@ -147,8 +153,8 @@ jobs:
             ### 📝 Notes
             Improvements and bug fixes. Report issues here: https://github.com/${{ github.repository }}/issues
           files: |
-            bin/Release/net8.0-windows/win-x64/publish/*.exe
-            publish/DeepCleaner-${{ steps.versions.outputs.safe }}.msi
+            publish/DeepCleaner-${{ steps.versions.outputs.safe }}.exe
+            msi-output/DeepCleaner-${{ steps.versions.outputs.safe }}.msi
           draft: false
           prerelease: ${{ contains(steps.gitversion.outputs.FullSemVer, '-') }}
           generate_release_notes: true
@@ -183,7 +189,7 @@ jobs:
           $repoUrl = "https://github.com/$repo"
 
           $msiName = "DeepCleaner-$version.msi"
-          $msiPath = "publish\$msiName"
+          $msiPath = "msi-output\$msiName"
           if (-not (Test-Path $msiPath)) { throw "MSI not found at $msiPath" }
 
           $msiUrl = "$repoUrl/releases/download/v$version/$msiName"
@@ -207,7 +213,7 @@ jobs:
             return $value
           }
 
-          $productCode = Get-MsiProperty -Path $msiPath -Property "ProductCode"
+          $productCode = (Get-MsiProperty -Path $msiPath -Property "ProductCode").Trim()
           if (-not $productCode) { throw "Failed to read ProductCode from $msiPath" }
 
           # Create output directory
