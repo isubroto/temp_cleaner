@@ -1,4 +1,5 @@
 name: Release WPF App with MSI
+
 on:
   push:
     branches:
@@ -22,6 +23,7 @@ env:
 
 jobs:
   release:
+    # Avoid loops if a bot-triggered push occurs
     if: ${{ github.actor != 'github-actions[bot]' }}
     runs-on: windows-latest
     name: Build and Release WPF App with MSI
@@ -63,9 +65,10 @@ jobs:
           Write-Host "Updating version in: $($projFile.FullName)"
           $version = '${{ steps.versions.outputs.safe }}'
           $versionTag = "<Version>$version</Version>"
+
           $content = Get-Content $projFile.FullName -Raw
           if ($content -notmatch '<Version>.*?</Version>') {
-            $content = $content -replace '</PropertyGroup>', "$versionTag`n  </PropertyGroup>"
+            $content = $content -replace '</PropertyGroup>', "$versionTag`n</PropertyGroup>"
           } else {
             $content = $content -replace '<Version>.*?</Version>', $versionTag
           }
@@ -83,23 +86,6 @@ jobs:
       - name: Publish WPF App
         shell: pwsh
         run: dotnet publish ${{ env.project }} -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true --no-build
-
-      - name: Rename Portable EXE with Version
-        shell: pwsh
-        run: |
-          $version = '${{ steps.versions.outputs.safe }}'
-          $publishDir = "bin\Release\net8.0-windows\win-x64\publish"
-          $exeFile = Get-ChildItem -Path $publishDir -Filter "*.exe" | Select-Object -First 1
-          
-          if ($exeFile) {
-            $newName = "DeepCleaner-$version.exe"
-            $newPath = Join-Path $publishDir $newName
-            Rename-Item -Path $exeFile.FullName -NewName $newName
-            Write-Host "✅ Renamed: $($exeFile.Name) → $newName"
-          } else {
-            Write-Error "No EXE found in $publishDir"
-            exit 1
-          }
 
       - name: Install WiX Toolset
         shell: pwsh
@@ -132,8 +118,10 @@ jobs:
         working-directory: Installer
         shell: pwsh
         run: |
-          $safeVersion = '${{ steps.versions.outputs.safe }}'
+          $safeVersion = '${{ steps.versions.outputs.safe }}'   # for file names/tags
+
           "SAFE_VERSION=$safeVersion" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
           & "C:\Program Files\WiX Toolset v6.0\bin\wix.exe" build Product.wxs Files.wxs `
             -arch x64 `
             -define ProductVersion=$safeVersion `
@@ -147,25 +135,19 @@ jobs:
           tag_name: v${{ steps.versions.outputs.safe }}
           body: |
             ## 🧹 DeepCleaner v${{ steps.versions.outputs.safe }}
-            
+
             ### 📦 What's Included
-            - **Portable Executable**: `DeepCleaner-${{ steps.versions.outputs.safe }}.exe` (single-file, no installation required)
-            - **MSI Installer**: `DeepCleaner-${{ steps.versions.outputs.safe }}.msi` (traditional Windows installer)
-            
+            - Portable Executable (single-file)
+            - MSI Installer
+
             ### 🚀 Installation
-            
-            **Option 1: Portable (Recommended for quick use)**
-            - Download `DeepCleaner-${{ steps.versions.outputs.safe }}.exe`
-            - Run directly - no installation needed
-            
-            **Option 2: MSI Installer (Recommended for permanent installation)**
-            - Download `DeepCleaner-${{ steps.versions.outputs.safe }}.msi`
-            - Double-click to install
-            
+            - Download `DeepCleaner-${{ steps.versions.outputs.safe }}.msi` and run it
+            - Or use the portable `.exe`
+
             ### 📝 Notes
             Improvements and bug fixes. Report issues here: https://github.com/${{ github.repository }}/issues
           files: |
-            bin/Release/net8.0-windows/win-x64/publish/DeepCleaner-${{ steps.versions.outputs.safe }}.exe
+            bin/Release/net8.0-windows/win-x64/publish/*.exe
             publish/DeepCleaner-${{ steps.versions.outputs.safe }}.msi
           draft: false
           prerelease: ${{ contains(steps.gitversion.outputs.FullSemVer, '-') }}
@@ -186,28 +168,35 @@ jobs:
             Write-Host "✅ Committed and pushed updated .csproj version: $safeVersion"
           }
 
+      # -----------------------------
+      # WinGet: Create manifests, validate, submit
+      # Only for stable releases (no '-' in version)
+      # -----------------------------
       - name: Create WinGet Manifests
         if: ${{ !contains(steps.gitversion.outputs.FullSemVer, '-') }}
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          $version = '${{ steps.versions.outputs.safe }}'
+
+          $version = '${{ steps.versions.outputs.safe }}'   # e.g., 0.1.31
           $repo = "${{ github.repository }}"
           $repoUrl = "https://github.com/$repo"
+
           $msiName = "DeepCleaner-$version.msi"
           $msiPath = "publish\$msiName"
-          
-          if (-not (Test-Path $msiPath)) {
-            throw "MSI not found at $msiPath"
-          }
-          
+          if (-not (Test-Path $msiPath)) { throw "MSI not found at $msiPath" }
+
           $msiUrl = "$repoUrl/releases/download/v$version/$msiName"
+
+          # Hash
           $hash = (Get-FileHash -Path $msiPath -Algorithm SHA256).Hash
-          
+
+          # Read MSI properties (ProductCode)
           function Get-MsiProperty {
-            param([Parameter(Mandatory)][string]$Path, [Parameter(Mandatory)][string]$Property)
+            param([Parameter(Mandatory)][string]$Path,
+                  [Parameter(Mandatory)][string]$Property)
             $installer = New-Object -ComObject WindowsInstaller.Installer
-            $database = $installer.GetType().InvokeMember("OpenDatabase","InvokeMethod",$null,$installer,@($Path,0))
+            $database  = $installer.GetType().InvokeMember("OpenDatabase","InvokeMethod",$null,$installer,@($Path,0))
             $view = $database.OpenView("SELECT `Value` FROM `Property` WHERE `Property` = '$Property'")
             $view.Execute()
             $record = $view.Fetch()
@@ -217,14 +206,14 @@ jobs:
             $installer = $null
             return $value
           }
-          
+
           $productCode = (Get-MsiProperty -Path $msiPath -Property "ProductCode").Trim()
-          if (-not $productCode) {
-            throw "Failed to read ProductCode from $msiPath"
-          }
-          
+          if (-not $productCode) { throw "Failed to read ProductCode from $msiPath" }
+
+          # Create output directory
           New-Item -ItemType Directory -Force -Path "winget" | Out-Null
-          
+
+          # Build manifests
           $versionManifest = @"
           PackageIdentifier: SubrotoSaha.DeepCleaner
           PackageVersion: $version
@@ -232,7 +221,7 @@ jobs:
           ManifestType: version
           ManifestVersion: 1.6.0
           "@.Trim()
-          
+
           $localeManifest = @"
           PackageIdentifier: SubrotoSaha.DeepCleaner
           PackageVersion: $version
@@ -250,12 +239,12 @@ jobs:
           Description: DeepCleaner is a professional Windows utility that helps you clean temporary files, system cache, and free up disk space. Features include safe cleaning algorithms, detailed scan reports, and scheduled cleaning options.
           Moniker: deepcleaner
           Tags:
-          - cleaner
-          - temp-files
-          - disk-cleanup
-          - system-utility
-          - windows
-          - maintenance
+            - cleaner
+            - temp-files
+            - disk-cleanup
+            - system-utility
+            - windows
+            - maintenance
           ReleaseNotes: |
             This release includes improvements and bug fixes.
             For detailed changelog, visit: $repoUrl/releases/tag/v$version
@@ -263,39 +252,39 @@ jobs:
           ManifestType: defaultLocale
           ManifestVersion: 1.6.0
           "@.Trim()
-          
+
           $installerManifest = @"
           PackageIdentifier: SubrotoSaha.DeepCleaner
           PackageVersion: $version
           Platform:
-          - Windows.Desktop
+            - Windows.Desktop
           MinimumOSVersion: 10.0.0.0
           InstallModes:
-          - interactive
-          - silent
-          - silentWithProgress
+            - interactive
+            - silent
+            - silentWithProgress
           UpgradeBehavior: install
           Installers:
-          - Architecture: x64
-            InstallerType: msi
-            InstallerUrl: $msiUrl
-            InstallerSha256: $hash
-            ProductCode: '$productCode'
-            Scope: machine
-            InstallerSwitches:
-              Silent: /qn /norestart
-              SilentWithProgress: /qb! /norestart
+            - Architecture: x64
+              InstallerType: msi
+              InstallerUrl: $msiUrl
+              InstallerSha256: $hash
+              ProductCode: '$productCode'
+              Scope: machine
+              InstallerSwitches:
+                Silent: /qn /norestart
+                SilentWithProgress: /qb! /norestart
           ManifestType: installer
           ManifestVersion: 1.6.0
           "@.Trim()
-          
+
           Set-Content -Path "winget/SubrotoSaha.DeepCleaner.yaml" -Value $versionManifest -Encoding UTF8
           Set-Content -Path "winget/SubrotoSaha.DeepCleaner.locale.en-US.yaml" -Value $localeManifest -Encoding UTF8
           Set-Content -Path "winget/SubrotoSaha.DeepCleaner.installer.yaml" -Value $installerManifest -Encoding UTF8
-          
+
           Write-Host "✅ WinGet manifests created"
-          Write-Host "MSI URL: $msiUrl"
-          Write-Host "SHA256: $hash"
+          Write-Host "MSI URL:  $msiUrl"
+          Write-Host "SHA256:   $hash"
           Write-Host "ProductCode: $productCode"
 
       - name: Upload WinGet Manifests as Artifacts
@@ -316,11 +305,11 @@ jobs:
         shell: pwsh
         run: |
           if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
-            Write-Host "winget CLI not found on this runner; skipping validation."
-            exit 0
-          }
-          winget --info
-          winget validate --manifest winget
+           Write-Host "winget CLI not found on this runner; skipping validation."
+           exit 0
+           }
+           winget --info
+           winget validate --manifest winget
 
       - name: Submit to WinGet
         if: ${{ !contains(steps.gitversion.outputs.FullSemVer, '-') }}
