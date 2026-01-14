@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
-
   <Package Name="DeepCleaner"
            Manufacturer="Subroto Saha"
            Version="$(var.ProductVersion)"
-           UpgradeCode="8ed2b67f-6148-4943-97a2-49d4c7a7dfec"
-           >
+           UpgradeCode="8ed2b67f-6148-4943-97a2-49d4c7a7dfec">
     <Media Id="1" Cabinet="media1.cab" EmbedCab="yes" />
 
     <!-- Directories -->
@@ -23,11 +21,7 @@
       <Directory Id="ProgramMenuDir" Name="DeepCleaner" />
     </StandardDirectory>
 
-    <!-- Components -->
-    <Component Id="MainExecutable" Directory="INSTALLFOLDER" Guid="*">
-      <File Source="..\bin\Release\net8.0-windows\win-x64\DeepCleaner.exe" />
-    </Component>
-
+    <!-- Desktop Shortcut -->
     <Component Id="DesktopShortcut" Directory="DesktopShortcutDir" Guid="*">
       <Shortcut Id="DesktopAppShortcut"
                 Name="DeepCleaner"
@@ -38,6 +32,7 @@
       <RegistryValue Root="HKCU" Key="Software\DeepCleaner\UI" Name="installed" Type="integer" Value="1" KeyPath="yes"/>
     </Component>
 
+    <!-- Start Menu Shortcut -->
     <Component Id="StartMenuShortcut" Directory="ProgramMenuDir" Guid="*">
       <Shortcut Id="StartMenuAppShortcut"
                 Name="DeepCleaner"
@@ -53,12 +48,10 @@
     <Property Id="ARPPRODUCTICON" Value="AppIcon"/>
 
     <!-- Feature -->
-    <Feature Id="ProductFeature" Title="Temp Cleaner" Level="1">
+    <Feature Id="ProductFeature" Title="DeepCleaner" Level="1">
       <ComponentGroupRef Id="AppFiles" />
-       <ComponentRef Id="MainExecutable" />
       <ComponentRef Id="DesktopShortcut"/>
       <ComponentRef Id="StartMenuShortcut"/>
     </Feature>
-
   </Package>
 </Wix>
