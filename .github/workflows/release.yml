@@ -207,9 +207,23 @@ jobs:
 
           $productCode = Get-MsiProperty -Path $msiPath -Property "ProductCode"
           if (-not $productCode) { throw "Failed to read ProductCode from $msiPath" }
-          # FIX #2: Properly trim and clean the ProductCode
-          $cleanProductCode = ($productCode -replace '[^\x20-\x7E]', '').Trim()
 
+          Write-Host "Raw ProductCode: '$productCode'"
+
+          # Try to extract GUID pattern first
+          $guidPattern = '\{[A-Fa-f0-9]{8}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{12}\}'
+          $match = [regex]::Match($productCode, $guidPattern)
+
+          if ($match.Success) {
+              $cleanProductCode = $match.Value
+              Write-Host "Extracted GUID: '$cleanProductCode'"
+          } else {
+              # Fallback: just trim and remove non-printable characters
+              $cleanProductCode = ($productCode -replace '[^\x21-\x7E]', '').Trim()
+              Write-Host "Fallback cleaned: '$cleanProductCode'"
+          }
+
+          Write-Host "Final ProductCode: '$cleanProductCode'"
           # Create output directory
           New-Item -ItemType Directory -Force -Path "winget" | Out-Null
 
@@ -260,6 +274,9 @@ jobs:
             - windows
             - maintenance
             - privacy
+          ReleaseNotes: |
+            This release includes improvements and bug fixes.
+            For detailed changelog, visit: $repoUrl/releases/tag/v$version
           ReleaseNotesUrl: $repoUrl/releases/tag/v$version
           ManifestType: defaultLocale
           ManifestVersion: 1.6.0
@@ -278,6 +295,10 @@ jobs:
           Platform:
             - Windows.Desktop
           MinimumOSVersion: 10.0.0.0
+          InstallModes:
+            - interactive
+            - silent
+            - silentWithProgress
           InstallerType: msi
           ExpectedReturnCodes:
             - InstallerReturnCode: 1602
@@ -315,7 +336,7 @@ jobs:
           Write-Host "MSI URL:     $msiUrl"
           Write-Host "SHA256:      $hash"
           Write-Host "ProductCode: $cleanProductCode"
-          
+
       - name: Upload WinGet Manifests as Artifacts
         if: ${{ !contains(steps.gitversion.outputs.FullSemVer, '-') }}
         uses: actions/upload-artifact@v4
