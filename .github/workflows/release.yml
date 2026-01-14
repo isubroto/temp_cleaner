@@ -200,7 +200,7 @@ jobs:
             $view = $database.OpenView("SELECT `Value` FROM `Property` WHERE `Property` = '$Property'")
             $view.Execute()
             $record = $view.Fetch()
-            $value = if ($record) { $record.StringData(1) } else { $null }
+            $value = if ($record) { $record.StringData(1).Trim() } else { $null }
             $view.Close()
             $database = $null
             $installer = $null
