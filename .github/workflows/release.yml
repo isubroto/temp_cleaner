@@ -195,7 +195,7 @@ jobs:
                   [Parameter(Mandatory)][string]$Property)
             $installer = New-Object -ComObject WindowsInstaller.Installer
             $database  = $installer.GetType().InvokeMember("OpenDatabase","InvokeMethod",$null,$installer,@($Path,0))
-            $view = $database.OpenView("SELECT `Value` FROM `Property` WHERE `Property` = '$Property'")
+            $view = $database.OpenView("SELECT ``Value`` FROM ``Property`` WHERE ``Property`` = '$Property'")
             $view.Execute()
             $record = $view.Fetch()
             $value = if ($record) { $record.StringData(1).Trim() } else { $null }
@@ -207,23 +207,25 @@ jobs:
 
           $productCode = Get-MsiProperty -Path $msiPath -Property "ProductCode"
           if (-not $productCode) { throw "Failed to read ProductCode from $msiPath" }
-          $cleanProductCode = $productCode -replace '[^\x20-\x7E]', ''
+          # FIX #2: Properly trim and clean the ProductCode
+          $cleanProductCode = ($productCode -replace '[^\x20-\x7E]', '').Trim()
 
           # Create output directory
           New-Item -ItemType Directory -Force -Path "winget" | Out-Null
 
           # ------------------------------
           # Version Manifest
+          # FIX #3: Escape $schema with backtick
           # ------------------------------
           $versionManifest = @"
           # Created with DeepCleaner Release Workflow
-          # yaml-language-server: $schema=https://aka.ms/winget-manifest.version.1.12.0.schema.json
+          # yaml-language-server: `$schema=https://aka.ms/winget-manifest.version.1.6.0.schema.json
 
           PackageIdentifier: SubrotoSaha.DeepCleaner
           PackageVersion: $version
           DefaultLocale: en-US
           ManifestType: version
-          ManifestVersion: 1.12.0
+          ManifestVersion: 1.6.0
           "@.Trim()
 
           # ------------------------------
@@ -231,7 +233,7 @@ jobs:
           # ------------------------------
           $localeManifest = @"
           # Created with DeepCleaner Release Workflow
-          # yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.12.0.schema.json
+          # yaml-language-server: `$schema=https://aka.ms/winget-manifest.defaultLocale.1.6.0.schema.json
 
           PackageIdentifier: SubrotoSaha.DeepCleaner
           PackageVersion: $version
@@ -239,14 +241,12 @@ jobs:
           Publisher: Subroto Saha
           PublisherUrl: $repoUrl
           PublisherSupportUrl: $repoUrl/issues
-          PrivacyUrl: $repoUrl#privacy
           Author: Subroto Saha
           PackageName: DeepCleaner
           PackageUrl: $repoUrl
           License: MIT
           LicenseUrl: $repoUrl/blob/main/LICENSE
           Copyright: Copyright (c) $(Get-Date -Format "yyyy") Subroto Saha
-          CopyrightUrl: $repoUrl/blob/main/LICENSE
           ShortDescription: A powerful Windows temporary files cleaner.
           Description: |-
             DeepCleaner is a professional Windows utility that helps you clean temporary files, system cache, and free up disk space. 
@@ -260,23 +260,18 @@ jobs:
             - windows
             - maintenance
             - privacy
-          ReleaseNotes: |
-            This release includes improvements and bug fixes.
-            For detailed changelog, visit: $repoUrl/releases/tag/v$version
           ReleaseNotesUrl: $repoUrl/releases/tag/v$version
-          Documentations:
-            - DocumentLabel: README
-              DocumentUrl: $repoUrl/blob/main/README.md
           ManifestType: defaultLocale
-          ManifestVersion: 1.12.0
+          ManifestVersion: 1.6.0
           "@.Trim()
 
           # ------------------------------
           # Installer Manifest
+          # FIX #1: Changed successRebootRequired to rebootRequiredToFinish
           # ------------------------------
           $installerManifest = @"
           # Created with DeepCleaner Release Workflow
-          # yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.12.0.schema.json
+          # yaml-language-server: `$schema=https://aka.ms/winget-manifest.installer.1.6.0.schema.json
 
           PackageIdentifier: SubrotoSaha.DeepCleaner
           PackageVersion: $version
@@ -285,23 +280,21 @@ jobs:
           MinimumOSVersion: 10.0.0.0
           InstallerType: msi
           ExpectedReturnCodes:
-          - InstallerReturnCode: -2147219440
-            ReturnResponse: cancelledByUser
-          - InstallerReturnCode: -2147219416
-            ReturnResponse: alreadyInstalled
-          - InstallerReturnCode: -2147218431
-            ReturnResponse: invalidParameter
-          - InstallerReturnCode: -2147024809
-            ReturnResponse: invalidParameter
-          - InstallerReturnCode: 3010
-            ReturnResponse: successRebootRequired
+            - InstallerReturnCode: 1602
+              ReturnResponse: cancelledByUser
+            - InstallerReturnCode: 1618
+              ReturnResponse: installInProgress
+            - InstallerReturnCode: 1638
+              ReturnResponse: alreadyInstalled
+            - InstallerReturnCode: 3010
+              ReturnResponse: rebootRequiredToFinish
           UpgradeBehavior: install
           Installers:
             - Architecture: x64
               Scope: machine
               InstallerUrl: $msiUrl
               InstallerSha256: $hash
-              ProductCode: $cleanProductCode
+              ProductCode: '$cleanProductCode'
               ElevationRequirement: elevationRequired
               InstallModes:
                 - interactive
@@ -311,7 +304,7 @@ jobs:
                 Silent: /qn /norestart
                 SilentWithProgress: /qb! /norestart
           ManifestType: installer
-          ManifestVersion: 1.12.0
+          ManifestVersion: 1.6.0
           "@.Trim()
 
           Set-Content -Path "winget/SubrotoSaha.DeepCleaner.yaml" -Value $versionManifest -Encoding UTF8
@@ -319,18 +312,10 @@ jobs:
           Set-Content -Path "winget/SubrotoSaha.DeepCleaner.installer.yaml" -Value $installerManifest -Encoding UTF8
 
           Write-Host "✅ WinGet manifests created"
-          Write-Host "MSI URL:  $msiUrl"
-          Write-Host "SHA256:   $hash"
+          Write-Host "MSI URL:     $msiUrl"
+          Write-Host "SHA256:      $hash"
           Write-Host "ProductCode: $cleanProductCode"
-
-          Set-Content -Path "winget/SubrotoSaha.DeepCleaner.yaml" -Value $versionManifest -Encoding UTF8
-          Set-Content -Path "winget/SubrotoSaha.DeepCleaner.locale.en-US.yaml" -Value $localeManifest -Encoding UTF8
-          Set-Content -Path "winget/SubrotoSaha.DeepCleaner.installer.yaml" -Value $installerManifest -Encoding UTF8
-
-          Write-Host "✅ WinGet manifests created"
-          Write-Host "MSI URL:  $msiUrl"
-          Write-Host "SHA256:   $hash"
-          Write-Host "ProductCode: $cleanProductCode"
+          
       - name: Upload WinGet Manifests as Artifacts
         if: ${{ !contains(steps.gitversion.outputs.FullSemVer, '-') }}
         uses: actions/upload-artifact@v4

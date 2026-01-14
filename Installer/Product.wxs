@@ -4,9 +4,12 @@
   <Package Name="DeepCleaner"
            Manufacturer="Subroto Saha"
            Version="$(var.ProductVersion)"
-           UpgradeCode="8ed2b67f-6148-4943-97a2-49d4c7a7dfec"
-           >
+           UpgradeCode="8ed2b67f-6148-4943-97a2-49d4c7a7dfec">
+           
     <Media Id="1" Cabinet="media1.cab" EmbedCab="yes" />
+
+    <!-- Upgrade handling -->
+    <MajorUpgrade DowngradeErrorMessage="A newer version of DeepCleaner is already installed." />
 
     <!-- Directories -->
     <StandardDirectory Id="ProgramFiles64Folder">
@@ -23,11 +26,7 @@
       <Directory Id="ProgramMenuDir" Name="DeepCleaner" />
     </StandardDirectory>
 
-    <!-- Components -->
-    <Component Id="MainExecutable" Directory="INSTALLFOLDER" Guid="*">
-      <File Source="..\bin\Release\net8.0-windows\win-x64\DeepCleaner.exe" />
-    </Component>
-
+    <!-- Shortcut Components (NOT the exe - that comes from Files.wxs) -->
     <Component Id="DesktopShortcut" Directory="DesktopShortcutDir" Guid="*">
       <Shortcut Id="DesktopAppShortcut"
                 Name="DeepCleaner"
@@ -54,8 +53,8 @@
 
     <!-- Feature -->
     <Feature Id="ProductFeature" Title="DeepCleaner" Level="1">
+      <!-- AppFiles from heat.exe includes DeepCleaner.exe and all other files -->
       <ComponentGroupRef Id="AppFiles" />
-       <ComponentRef Id="MainExecutable" />
       <ComponentRef Id="DesktopShortcut"/>
       <ComponentRef Id="StartMenuShortcut"/>
     </Feature>
