@@ -198,26 +198,54 @@ jobs:
           $hash = (Get-FileHash -Path $msiPath -Algorithm SHA256).Hash
 
           # Read MSI properties (ProductCode)
+          # Read MSI properties (ProductCode)
           function Get-MsiProperty {
-            param([Parameter(Mandatory)][string]$Path,
-                  [Parameter(Mandatory)][string]$Property)
-            $installer = New-Object -ComObject WindowsInstaller.Installer
-            $database  = $installer.GetType().InvokeMember("OpenDatabase","InvokeMethod",$null,$installer,@($Path,0))
-            $view = $database.OpenView("SELECT `Value` FROM `Property` WHERE `Property` = '$Property'")
-            $view.Execute()
-            $record = $view.Fetch()
-            $value = if ($record) { $record.StringData(1) } else { $null }
-            $view.Close()
-            $database = $null
-            $installer = $null
-            return $value
+            param(
+              [Parameter(Mandatory)][string]$Path,
+              [Parameter(Mandatory)][string]$Property
+            )
+
+            if (-not (Test-Path $Path)) {
+              throw "MSI file not found: $Path"
+            }
+
+            try {
+              $installer = New-Object -ComObject WindowsInstaller.Installer
+              $database  = $installer.GetType().InvokeMember(
+                "OpenDatabase",
+                "InvokeMethod",
+                $null,
+                $installer,
+                @($Path, 0)
+              )
+
+              $view = $database.OpenView(
+                "SELECT `Value` FROM `Property` WHERE `Property` = '$Property'"
+              )
+              $view.Execute()
+              $record = $view.Fetch()
+
+              if (-not $record) {
+                return $null
+              }
+
+              # ✅ FIX: trim at source
+              return $record.StringData(1).Trim()
+            }
+            finally {
+              if ($view) { $view.Close() }
+              $database = $null
+              $installer = $null
+            }
           }
 
           $productCode = Get-MsiProperty -Path $msiPath -Property "ProductCode"
-          if (-not $productCode) { throw "Failed to read ProductCode from $msiPath" }
-          Write-Host "ProductCode: $productCode"
-          $productCode = $productCode.Trim()
-          Write-Host "Trimmed ProductCode: $productCode"
+
+          if ([string]::IsNullOrWhiteSpace($productCode)) {
+            throw "Failed to read ProductCode from $msiPath"
+          }
+
+          Write-Host "ProductCode (normalized): '$productCode'"
           # Create output directory
           New-Item -ItemType Directory -Force -Path "winget" | Out-Null
 
