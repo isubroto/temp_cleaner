@@ -216,7 +216,7 @@ jobs:
 
           # Build manifests
           $versionManifest = @"
-# yaml-language-server: `$schema=https://aka.ms/winget-manifest.version.1.10.0.schema.json
+# yaml-language-server: $$schema=https://aka.ms/winget-manifest.version.1.10.0.schema.json
 PackageIdentifier: SubrotoSaha.DeepCleaner
 PackageVersion: $version
 DefaultLocale: en-US
@@ -224,7 +224,7 @@ ManifestType: version
 ManifestVersion: 1.10.0
 "@
           $localeManifest = @"
-# yaml-language-server: `$schema=https://aka.ms/winget-manifest.defaultLocale.1.10.0.schema.json
+# yaml-language-server: $$schema=https://aka.ms/winget-manifest.defaultLocale.1.10.0.schema.json
 PackageIdentifier: SubrotoSaha.DeepCleaner
 PackageVersion: $version
 PackageLocale: en-US
@@ -255,7 +255,7 @@ ManifestType: defaultLocale
 ManifestVersion: 1.10.0
 "@
           $installerManifest = @"
-# yaml-language-server: `$schema=https://aka.ms/winget-manifest.installer.1.10.0.schema.json
+# yaml-language-server: $$schema=https://aka.ms/winget-manifest.installer.1.10.0.schema.json
 PackageIdentifier: SubrotoSaha.DeepCleaner
 PackageVersion: $version
 Platform:
