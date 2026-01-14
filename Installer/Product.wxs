@@ -53,7 +53,7 @@
     <Property Id="ARPPRODUCTICON" Value="AppIcon"/>
 
     <!-- Feature -->
-    <Feature Id="ProductFeature" Title="Temp Cleaner" Level="1">
+    <Feature Id="ProductFeature" Title="DeepCleaner" Level="1">
       <ComponentGroupRef Id="AppFiles" />
        <ComponentRef Id="MainExecutable" />
       <ComponentRef Id="DesktopShortcut"/>

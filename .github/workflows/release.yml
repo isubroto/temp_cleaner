@@ -204,7 +204,7 @@ jobs:
             $view.Close()
             $database = $null
             $installer = $null
-            return $value
+            return $value.Trim()
           }
 
           $productCode = Get-MsiProperty -Path $msiPath -Property "ProductCode"
