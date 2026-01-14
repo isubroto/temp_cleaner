@@ -209,6 +209,7 @@ jobs:
 
           $productCode = Get-MsiProperty -Path $msiPath -Property "ProductCode"
           if (-not $productCode) { throw "Failed to read ProductCode from $msiPath" }
+          $productCode = $productCode -replace '^\s+|\s+$', ''  # Remove leading/trailing whitespace with regex
 
           # Create output directory
           New-Item -ItemType Directory -Force -Path "winget" | Out-Null
@@ -219,8 +220,8 @@ jobs:
           PackageVersion: $version
           DefaultLocale: en-US
           ManifestType: version
-          ManifestVersion: 1.6.0
-          "@.Trim()
+          ManifestVersion: 1.10.0
+          "@
 
           $localeManifest = @"
           PackageIdentifier: SubrotoSaha.DeepCleaner
@@ -239,44 +240,45 @@ jobs:
           Description: DeepCleaner is a professional Windows utility that helps you clean temporary files, system cache, and free up disk space. Features include safe cleaning algorithms, detailed scan reports, and scheduled cleaning options.
           Moniker: deepcleaner
           Tags:
-            - cleaner
-            - temp-files
-            - disk-cleanup
-            - system-utility
-            - windows
-            - maintenance
-          ReleaseNotes: |
+          - cleaner
+          - temp-files
+          - disk-cleanup
+          - system-utility
+          - windows
+          - maintenance
+          ReleaseNotes: |-
             This release includes improvements and bug fixes.
             For detailed changelog, visit: $repoUrl/releases/tag/v$version
           ReleaseNotesUrl: $repoUrl/releases/tag/v$version
           ManifestType: defaultLocale
-          ManifestVersion: 1.6.0
-          "@.Trim()
+          ManifestVersion: 1.10.0
+          "@
 
           $installerManifest = @"
           PackageIdentifier: SubrotoSaha.DeepCleaner
           PackageVersion: $version
           Platform:
-            - Windows.Desktop
+          - Windows.Desktop
           MinimumOSVersion: 10.0.0.0
           InstallModes:
-            - interactive
-            - silent
-            - silentWithProgress
+          - interactive
+          - silent
+          - silentWithProgress
           UpgradeBehavior: install
           Installers:
-            - Architecture: x64
-              InstallerType: msi
-              InstallerUrl: $msiUrl
-              InstallerSha256: $hash
-              ProductCode: '$productCode'
-              Scope: machine
-              InstallerSwitches:
-                Silent: /qn /norestart
-                SilentWithProgress: /qb! /norestart
+          - Architecture: x64
+            InstallerType: msi
+            InstallerUrl: $msiUrl
+            InstallerSha256: $hash
+            ProductCode: '{$($productCode)}'
+            ReleaseDate: $(Get-Date -Format "yyyy-MM-dd")
+            Scope: machine
+            InstallerSwitches:
+              Silent: /qn /norestart
+              SilentWithProgress: /qb! /norestart
           ManifestType: installer
-          ManifestVersion: 1.6.0
-          "@.Trim()
+          ManifestVersion: 1.10.0
+          "@
 
           Set-Content -Path "winget/SubrotoSaha.DeepCleaner.yaml" -Value $versionManifest -Encoding UTF8
           Set-Content -Path "winget/SubrotoSaha.DeepCleaner.locale.en-US.yaml" -Value $localeManifest -Encoding UTF8
@@ -285,7 +287,7 @@ jobs:
           Write-Host "✅ WinGet manifests created"
           Write-Host "MSI URL:  $msiUrl"
           Write-Host "SHA256:   $hash"
-          Write-Host "ProductCode: $productCode"
+          Write-Host "ProductCode: {$productCode}"
 
       - name: Upload WinGet Manifests as Artifacts
         if: ${{ !contains(steps.gitversion.outputs.FullSemVer, '-') }}
