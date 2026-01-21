@@ -12,7 +12,7 @@
     <RootNamespace>TempCleaner</RootNamespace>
     <Product>DeepCleaner Pro</Product>
     <Company>Subroto</Company>
-    <Version>0.1.51.3</Version>
+    <Version>0.1.52.3</Version>
     
     <!-- Resources -->
     <ApplicationIcon>Images\Designer.ico</ApplicationIcon>
@@ -22,7 +22,7 @@
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-    <Version>0.1.51.3</Version>
+    <Version>0.1.52.3</Version>
   </PropertyGroup>
 
   <!-- Release-specific optimizations -->
@@ -39,6 +39,7 @@
   </ItemGroup>
 
 </Project>
+
 
 
 
