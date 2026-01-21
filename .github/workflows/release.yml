@@ -317,10 +317,6 @@ jobs:
               InstallerSha256: $hash
               ProductCode: '$cleanProductCode'
               ElevationRequirement: elevationRequired
-              InstallModes:
-                - interactive
-                - silent
-                - silentWithProgress
               InstallerSwitches:
                 Silent: /qn /norestart
                 SilentWithProgress: /qb! /norestart
